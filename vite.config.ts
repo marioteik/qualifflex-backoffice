@@ -30,8 +30,15 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  preview: {
+    port: 3000,
+    strictPort: true,
+  },
   server: {
     port: 3000,
+    strictPort: true,
+    host: true,
+    origin: "http://0.0.0.0:3000",
   },
   esbuild: {
     drop: mode === "production" ? ["console", "debugger"] : [],
