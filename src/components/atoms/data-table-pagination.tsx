@@ -22,11 +22,13 @@ interface DataTablePaginationProps<TData> {
 
 export function DataTablePagination<TData>({
   table,
-  compact,
+  compact = false,
 }: DataTablePaginationProps<TData>) {
+  const canSelectRows = !compact && !!table.getColumn("select");
+
   return (
     <div className="flex items-center justify-between w-full px-2">
-      {!compact ? (
+      {canSelectRows ? (
         <div className="flex-1 text-sm text-muted-foreground">
           {table.getFilteredSelectedRowModel().rows.length} de{" "}
           {table.getFilteredRowModel().rows.length} itens(s) selecionados.

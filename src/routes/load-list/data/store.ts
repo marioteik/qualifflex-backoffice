@@ -116,6 +116,15 @@ const pendingInitialState = {
   ],
 };
 
+const pendingApprovalInitialState = {
+  columnFilters: [
+    {
+      id: "status",
+      value: "Pendente aprovação",
+    },
+  ],
+};
+
 const finishingInitialState = {
   columnFilters: [
     {
@@ -237,6 +246,12 @@ export const useLoadListStore = create<State>()(
             _initialState = {
               ...initialState,
               ...pendingInitialState,
+            };
+            break;
+          case "pending-approval":
+            _initialState = {
+              ...initialState,
+              ...pendingApprovalInitialState,
             };
             break;
           case "in-production":

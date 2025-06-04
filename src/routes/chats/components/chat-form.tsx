@@ -114,31 +114,10 @@ export default function ChatForm() {
 
   const onSubmit = (data: ChatMessage) => {
     mutate(data, {
-      onSuccess(data) {
+      onSuccess() {
         if (containerRef.current) {
           containerRef.current.scrollTop = containerRef.current.scrollHeight;
         }
-
-        const record = data as ChatMessage;
-
-        queryClient.setQueryData(
-          queryKeyFactory.chatRooms(),
-          (oldData: Room[]) => {
-            if (!oldData) return [];
-
-            return oldData.map((item) => {
-              if (item.shipmentId === record.shipmentId)
-                console.log({
-                  ...item,
-                  chatMessages: [...item.chatMessages, record],
-                });
-
-              return item.shipmentId === record.shipmentId
-                ? { ...item, chatMessages: [...item.chatMessages, record] }
-                : item;
-            });
-          }
-        );
 
         reset();
       },

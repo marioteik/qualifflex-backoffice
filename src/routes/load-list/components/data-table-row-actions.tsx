@@ -5,6 +5,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
@@ -151,15 +153,40 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
             </DropdownMenuSubContent>
           </DropdownMenuSub>
 
-          {/*<DropdownMenuSeparator />*/}
+          {/* {(row.original as ShipmentsRow)?.informedEstimation &&
+            !(row.original as ShipmentsRow)?.confirmedAt && (
+              <> */}
+          {/* <DropdownMenuSeparator />
 
-          {/*{!(row.original as ShipmentsRow)?.bannedUntil && (*/}
-          {/*  <DropdownMenuItem onClick={handleDisable}>*/}
-          {/*    Desativar*/}
-          {/*    <DropdownMenuShortcut>⌘X</DropdownMenuShortcut>*/}
-          {/*  </DropdownMenuItem>*/}
-          {/*)}*/}
+          <DropdownMenuItem
+            onClick={() => {
+              const updatedRow = {
+                ...row.original,
+                status: "Confirmado",
+                ...clearFieldsBasedOnStatus("Confirmado"),
+                items: row.original.items.map((item) => {
+                  return {
+                    ...item,
+                    product: undefined,
+                  };
+                }),
+                confirmedAt: new Date(),
+                systemEstimation: new Date(),
+              };
 
+              const result = selectShipmentSchema.safeParse(updatedRow);
+
+              if (result.success) {
+                mutate(result.data);
+              } else {
+                console.error("Validation failed:", result.error.errors);
+              }
+            }}
+          >
+            Aprovar
+          </DropdownMenuItem> */}
+          {/* </>
+            )} */}
           {/*{(row.original as ShipmentsRow)?.bannedUntil && (*/}
           {/*  <DropdownMenuItem*/}
           {/*    onClick={() =>*/}

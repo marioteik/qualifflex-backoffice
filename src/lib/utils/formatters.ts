@@ -12,6 +12,11 @@ export function formatToBRNumber(value: number) {
   }).format(value);
 }
 
+export function formatDate(date: string | Date) {
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+  return dateObj.toLocaleDateString("pt-BR");
+}
+
 export function formatCEP(value: string) {
   return value.replace(/(\d{5})(\d{3})/, "$1-$2");
 }
@@ -26,7 +31,7 @@ export function formatCPFOrCNPJ(value: string) {
   } else {
     return value.replace(
       /(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
-      "$1.$2.$3/$4-$5",
+      "$1.$2.$3/$4-$5"
     );
   }
 }

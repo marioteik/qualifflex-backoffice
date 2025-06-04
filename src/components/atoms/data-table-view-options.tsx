@@ -13,10 +13,12 @@ import {
 
 interface DataTableViewOptionsProps<TData> {
   table: Table<TData>;
+  hideColumns?: string[];
 }
 
 export function DataTableViewOptions<TData>({
   table,
+  hideColumns,
 }: DataTableViewOptionsProps<TData>) {
   return (
     <DropdownMenu>
@@ -37,7 +39,9 @@ export function DataTableViewOptions<TData>({
           .getAllColumns()
           .filter(
             (column) =>
-              typeof column.accessorFn !== "undefined" && column.getCanHide(),
+              typeof column.accessorFn !== "undefined" &&
+              column.getCanHide() &&
+              !hideColumns?.includes(column.id)
           )
           .map((column: Column<TData, unknown>) => {
             return (

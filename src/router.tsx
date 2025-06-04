@@ -25,6 +25,7 @@ import Chats from "./routes/chats";
 import LoadList from "@/routes/load-list";
 import Products from "@/routes/products";
 import Orders from "@/routes/orders";
+import OrderDetail from "@/routes/orders/order-detail";
 import apiClient from "./api-client";
 import ForgotPassword from "./routes/auth/forgot-password";
 import ShipmentsImports from "./routes/shipments-imports";
@@ -102,6 +103,19 @@ const router = createBrowserRouter([
                 </BreadcrumbLink>
               ),
             },
+            children: [
+              {
+                path: ":id",
+                element: <Shipments key="all" />,
+                handle: {
+                  crumb: () => (
+                    <BreadcrumbLink asChild>
+                      <Link to="/shipments/all">Todas</Link>
+                    </BreadcrumbLink>
+                  ),
+                },
+              },
+            ],
           },
           {
             path: "pending",
@@ -113,6 +127,47 @@ const router = createBrowserRouter([
                 </BreadcrumbLink>
               ),
             },
+            children: [
+              {
+                path: ":id",
+                element: <Shipments key="pending" />,
+                handle: {
+                  crumb: () => (
+                    <BreadcrumbLink asChild>
+                      <Link to="/shipments/pending">Pendentes</Link>
+                    </BreadcrumbLink>
+                  ),
+                },
+              },
+            ],
+          },
+          {
+            path: "pending-approval",
+            element: <Shipments key="pending-approval" />,
+            handle: {
+              crumb: () => (
+                <BreadcrumbLink asChild>
+                  <Link to="/shipments/pending-approval">
+                    Aguardando aprovação
+                  </Link>
+                </BreadcrumbLink>
+              ),
+            },
+            children: [
+              {
+                path: ":id",
+                element: <Shipments key="pending-approval" />,
+                handle: {
+                  crumb: () => (
+                    <BreadcrumbLink asChild>
+                      <Link to="/shipments/pending-approval">
+                        Aguardando aprovação
+                      </Link>
+                    </BreadcrumbLink>
+                  ),
+                },
+              },
+            ],
           },
           {
             path: "in-production",
@@ -124,6 +179,19 @@ const router = createBrowserRouter([
                 </BreadcrumbLink>
               ),
             },
+            children: [
+              {
+                path: ":id",
+                element: <Shipments key="in-production" />,
+                handle: {
+                  crumb: () => (
+                    <BreadcrumbLink asChild>
+                      <Link to="/shipments/in-production">Em Produção</Link>
+                    </BreadcrumbLink>
+                  ),
+                },
+              },
+            ],
           },
           {
             path: "collected",
@@ -135,6 +203,19 @@ const router = createBrowserRouter([
                 </BreadcrumbLink>
               ),
             },
+            children: [
+              {
+                path: ":id",
+                element: <Shipments key="collected" />,
+                handle: {
+                  crumb: () => (
+                    <BreadcrumbLink asChild>
+                      <Link to="/shipments/collected">Em Produção</Link>
+                    </BreadcrumbLink>
+                  ),
+                },
+              },
+            ],
           },
           {
             path: "refused",
@@ -146,6 +227,19 @@ const router = createBrowserRouter([
                 </BreadcrumbLink>
               ),
             },
+            children: [
+              {
+                path: ":id",
+                element: <Shipments key="refused" />,
+                handle: {
+                  crumb: () => (
+                    <BreadcrumbLink asChild>
+                      <Link to="/shipments/refused">Recusados</Link>
+                    </BreadcrumbLink>
+                  ),
+                },
+              },
+            ],
           },
           {
             path: "archive",
@@ -157,6 +251,19 @@ const router = createBrowserRouter([
                 </BreadcrumbLink>
               ),
             },
+            children: [
+              {
+                path: ":id",
+                element: <Shipments key="archive" />,
+                handle: {
+                  crumb: () => (
+                    <BreadcrumbLink asChild>
+                      <Link to="/shipments/arquivo">Arquivo</Link>
+                    </BreadcrumbLink>
+                  ),
+                },
+              },
+            ],
           },
         ],
       },
@@ -217,14 +324,23 @@ const router = createBrowserRouter([
       },
       {
         path: "orders",
-        element: <Orders />,
+        element: <Outlet />,
         handle: {
-          crumb: () => (
-            <BreadcrumbLink asChild>
-              <Link to="/orders">Ordens de Pedido</Link>
-            </BreadcrumbLink>
-          ),
+          crumb: () => <BreadcrumbLink>Ordens de Produção</BreadcrumbLink>,
         },
+        children: [
+          {
+            index: true,
+            element: <Orders />,
+          },
+          {
+            path: ":id",
+            element: <OrderDetail />,
+            handle: {
+              crumb: () => <BreadcrumbLink>Detalhes do Pedido</BreadcrumbLink>,
+            },
+          },
+        ],
       },
       {
         path: "shipments-imports",

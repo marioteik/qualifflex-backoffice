@@ -34,12 +34,42 @@ const selectOrderSchema = z
   })
   .merge(insertOrderSchema);
 
+const listOrdersSchema = z.object({
+  id: z.string().uuid(),
+  codeReference: z.string(),
+  createdAt: z.date(),
+  shipments: z.array(
+    z.object({
+      shipmentId: z.string().uuid(),
+      shipment: z.object({
+        number: z.string(),
+      }),
+    })
+  ),
+  shipmentItems: z.array(
+    z.object({
+      shipmentItemId: z.string().uuid(),
+      shipmentItem: z.object({
+        id: z.string().uuid(),
+        quantity: z.string(), // numeric fields come as strings from DB
+        product: z.object({
+          id: z.string().uuid(),
+          description: z.string(),
+        }),
+      }),
+    })
+  ),
+});
+
 type InsertOrder = z.infer<typeof insertOrderSchema>;
 type SelectOrder = z.infer<typeof selectOrderSchema>;
+type ListOrders = z.infer<typeof listOrdersSchema>;
 
 export {
   insertOrderSchema,
   selectOrderSchema,
+  listOrdersSchema,
   type InsertOrder,
   type SelectOrder,
+  type ListOrders,
 };

@@ -20,6 +20,32 @@ export function useShipments() {
   });
 }
 
+export function useShipment(id: string) {
+  return useQuery({
+    queryKey: queryKeyFactory.shipmentDetail(id),
+    queryFn: fetchWithToken<SelectShipment>(`${route}/${id}`),
+    enabled: !!id,
+  });
+}
+
+export function useShipmentHistory(id: string) {
+  return useQuery({
+    queryKey: queryKeyFactory.shipmentHistory(id),
+    queryFn: fetchWithToken<SelectShipment[]>(`${route}/${id}/history`),
+    enabled: !!id,
+  });
+}
+
+export function useRelatedShipments(recipientId?: string, enabled = false) {
+  return useQuery({
+    queryKey: queryKeyFactory.relatedShipments(recipientId ?? ""),
+    queryFn: fetchWithToken<SelectShipment[]>(
+      `${route}/${recipientId}/related`
+    ),
+    enabled,
+  });
+}
+
 export function useCreateShipment(options: QueryOptions = {}) {
   return useMutation<InsertShipment>({
     mutationKey: queryKeyFactory.shipments(),
@@ -29,10 +55,10 @@ export function useCreateShipment(options: QueryOptions = {}) {
   });
 }
 
-export function useUpdateShipment(options: QueryOptions = {}) {
+export function useUpdateShipmentStatus(options: QueryOptions = {}) {
   return useMutation({
     mutationKey: queryKeyFactory.shipments(),
-    mutationFn: putWithToken(route),
+    mutationFn: putWithToken(`${route}/status`),
     ...handleSettledMutation(queryKeyFactory.shipments()),
     ...options,
   });

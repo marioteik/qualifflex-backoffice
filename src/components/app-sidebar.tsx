@@ -54,6 +54,10 @@ const data = {
           url: "/shipments/pending",
         },
         {
+          title: "Aguardando aprovação",
+          url: "/shipments/pending-approval",
+        },
+        {
           title: "Produzindo",
           url: "/shipments/in-production",
         },

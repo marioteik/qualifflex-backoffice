@@ -74,7 +74,8 @@ export default function OrderShipmentsList({
       <CardHeader className="flex flex-row items-start bg-muted/50 shrink">
         <div className="grid gap-0.5">
           <CardTitle className="group flex items-center gap-2 text-lg">
-            Ordem de Pedido N.º {formatToBRNumber(Number(order.codeReference))}
+            Ordem de Produção N.º{" "}
+            {formatToBRNumber(Number(order.codeReference))}
             <Button
               size="icon"
               variant="outline"
@@ -87,7 +88,7 @@ export default function OrderShipmentsList({
                 <Copy className="h-3 w-3" />
               )}
               <span className="sr-only">
-                Copiar o número da ordem de pedido
+                Copiar o número da ordem de produção
               </span>
             </Button>
           </CardTitle>
@@ -154,7 +155,7 @@ export default function OrderShipmentsList({
 
       <CardContent>
         <h3 className="text-lg font-semibold mb-4">
-          Produtos da Ordem de Pedido
+          Produtos da Ordem de Produção
         </h3>
         <div className="space-y-2">
           {order.shipmentItems.map((item) => (

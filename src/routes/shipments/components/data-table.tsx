@@ -20,13 +20,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import ShipmentForm from "./shipment-form";
 import DeleteModal from "./delete-modal";
 import { useShallow } from "zustand/react/shallow";
 import { DataTablePagination } from "@/components/atoms/data-table-pagination";
 import { useShipments } from "@/api/shipments";
 import { useShipmentsStore } from "@/routes/shipments/data/store";
-import { useEffect, useMemo } from "react";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -44,7 +42,6 @@ export function DataTable<TData, TValue>({
     setColumnVisibility,
     pagination,
     setPagination,
-    isEditOpen,
     isDeleteOpen,
     isDisableOpen,
   } = useShipmentsStore(
@@ -60,7 +57,7 @@ export function DataTable<TData, TValue>({
       isEditOpen: state.isEditOpen,
       isDeleteOpen: state.isDeleteOpen,
       isDisableOpen: state.isDisableOpen,
-    })),
+    }))
   );
 
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
@@ -115,7 +112,7 @@ export function DataTable<TData, TValue>({
                           ? null
                           : flexRender(
                               header.column.columnDef.header,
-                              header.getContext(),
+                              header.getContext()
                             )}
                       </TableHead>
                     ))}
@@ -136,7 +133,7 @@ export function DataTable<TData, TValue>({
                         >
                           {flexRender(
                             cell.column.columnDef.cell,
-                            cell.getContext(),
+                            cell.getContext()
                           )}
                         </TableCell>
                       ))}
@@ -159,7 +156,6 @@ export function DataTable<TData, TValue>({
 
         <DataTablePagination table={table} />
       </div>
-      {isEditOpen && <ShipmentForm />}
       {(isDeleteOpen || isDisableOpen) && <DeleteModal />}
     </>
   );

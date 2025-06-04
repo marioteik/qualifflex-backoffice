@@ -24,6 +24,12 @@ interface State {
   isDisableOpen: boolean;
   setIsDisableOpen: (isDisableOpen: boolean) => void;
 
+  isDetailModalOpen: boolean;
+  setIsDetailModalOpen: (isDetailModalOpen: boolean) => void;
+
+  selectedShipmentId: string | null;
+  setSelectedShipmentId: (selectedShipmentId: string | null) => void;
+
   setIsClose: () => void;
 
   row: ShipmentsRow;
@@ -31,24 +37,24 @@ interface State {
 
   pagination: PaginationState;
   setPagination: (
-    pagination: PaginationState | ((old: PaginationState) => PaginationState),
+    pagination: PaginationState | ((old: PaginationState) => PaginationState)
   ) => void;
 
   sorting: { id: string; desc: boolean }[];
   setSorting: (
-    sorting: SortingState | ((old: SortingState) => SortingState),
+    sorting: SortingState | ((old: SortingState) => SortingState)
   ) => void;
 
   columnFilters: ColumnFiltersState;
   setColumnFilters: (
     filters:
       | ColumnFiltersState
-      | ((old: ColumnFiltersState) => ColumnFiltersState),
+      | ((old: ColumnFiltersState) => ColumnFiltersState)
   ) => void;
 
   columnVisibility: VisibilityState;
   setColumnVisibility: (
-    visibility: VisibilityState | ((old: VisibilityState) => VisibilityState),
+    visibility: VisibilityState | ((old: VisibilityState) => VisibilityState)
   ) => void;
 
   resetStore: (path: string) => void;
@@ -64,6 +70,8 @@ type InitialState = Omit<
   | "setIsDeleteOpen"
   | "setIsDisableOpen"
   | "setIsEditOpen"
+  | "setIsDetailModalOpen"
+  | "setSelectedShipmentId"
   | "setOpenFile"
   | "setPagination"
   | "resetStore"
@@ -74,6 +82,8 @@ const initialState: InitialState = {
   isEditOpen: false,
   isDeleteOpen: false,
   isDisableOpen: false,
+  isDetailModalOpen: false,
+  selectedShipmentId: null,
   row: null,
   pagination: {
     pageIndex: 0,
@@ -81,7 +91,10 @@ const initialState: InitialState = {
   },
   sorting: [{ id: "issueDate", desc: true }],
   columnFilters: [],
-  columnVisibility: {},
+  columnVisibility: {
+    description: false,
+    ops: false,
+  },
 };
 
 const pendingInitialState = {
@@ -89,6 +102,15 @@ const pendingInitialState = {
     {
       id: "status",
       value: "Pendente",
+    },
+  ],
+};
+
+const pendingApprovalInitialState = {
+  columnFilters: [
+    {
+      id: "status",
+      value: "Pendente aprovação",
     },
   ],
 };
@@ -156,6 +178,8 @@ export const useShipmentsStore = create<State>()(
             isDeleteOpen: false,
             isEditOpen: false,
             isDisableOpen: false,
+            isDetailModalOpen: false,
+            selectedShipmentId: null,
             row: null,
           }),
 
@@ -190,6 +214,17 @@ export const useShipmentsStore = create<State>()(
                 : visibility,
           })),
 
+        setIsDetailModalOpen: (isDetailModalOpen) =>
+          set((state) => ({
+            isDetailModalOpen:
+              typeof isDetailModalOpen === "boolean"
+                ? isDetailModalOpen
+                : !state.isDetailModalOpen,
+          })),
+
+        setSelectedShipmentId: (selectedShipmentId) =>
+          set(() => ({ selectedShipmentId })),
+
         resetStore: (path) => {
           let _initialState: InitialState;
 
@@ -198,6 +233,12 @@ export const useShipmentsStore = create<State>()(
               _initialState = {
                 ...initialState,
                 ...pendingInitialState,
+              };
+              break;
+            case "pending-approval":
+              _initialState = {
+                ...initialState,
+                ...pendingApprovalInitialState,
               };
               break;
             case "in-production":
@@ -242,8 +283,8 @@ export const useShipmentsStore = create<State>()(
             return value;
           },
         }),
-      },
+      }
     ),
-    { name: "shipment-store" },
-  ),
+    { name: "shipment-store" }
+  )
 );

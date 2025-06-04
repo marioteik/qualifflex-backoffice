@@ -1,3 +1,4 @@
+import React from "react";
 import { type RowSelectionState, Table } from "@tanstack/react-table";
 import { Volleyball, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,9 @@ import { DataTableFacetedFilter } from "@/components/atoms/data-table-faceted-fi
 import { DataTableViewOptions } from "@/components/atoms/data-table-view-options";
 import { useShipments } from "@/api/shipments";
 import { DataTableStatus } from "./data-table-status";
+
 import type { Dispatch, SetStateAction } from "react";
+import { DebouncedInput } from "@/components/atoms/debounced-input";
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
@@ -21,12 +24,23 @@ export function DataTableToolbar<TData>({
   setRowSelection,
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0;
+  const nameSearch = table.getColumn("number")?.getFilterValue();
 
   const { data } = useShipments();
 
   return (
     <div className="flex items-center justify-between">
       <div className="flex flex-1 items-center space-x-2">
+        <DebouncedInput
+          value={nameSearch as string}
+          className="md:text-sm h-8 w-[310px]"
+          debounce={200}
+          onChange={(value) => {
+            table.getColumn("number")?.setFilterValue(value);
+          }}
+          placeholder="Referência, costureira, OP, material e emissão"
+        />
+
         {table.getColumn("recipient") && (
           <DataTableFacetedFilter
             column={table.getColumn("recipient")}
@@ -40,8 +54,8 @@ export function DataTableToolbar<TData>({
                     "";
 
                   return [label, { label, value: label, icon: Volleyball }];
-                }),
-              ).values(),
+                })
+              ).values()
             )}
           />
         )}
@@ -71,20 +85,10 @@ export function DataTableToolbar<TData>({
           setRowSelection={setRowSelection}
         />
 
-        <DataTableViewOptions table={table} />
-
-        {/*<div className="inline-flex items-center gap-2">*/}
-        {/*  <Button*/}
-        {/*    size="sm"*/}
-        {/*    className="h-8 gap-1"*/}
-        {/*    onClick={() => setOpened(true)}*/}
-        {/*  >*/}
-        {/*    <PlusCircle className="h-3.5 w-3.5" />*/}
-        {/*    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">*/}
-        {/*      Add Remessa*/}
-        {/*    </span>*/}
-        {/*  </Button>*/}
-        {/*</div>*/}
+        <DataTableViewOptions
+          table={table}
+          hideColumns={["description", "ops"]}
+        />
       </div>
     </div>
   );

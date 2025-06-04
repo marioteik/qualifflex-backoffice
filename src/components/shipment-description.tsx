@@ -122,7 +122,7 @@ export default function ShipmentDescription({
                 </span>
                 <span>
                   {formatToBRL(
-                    Number(item.totalPrice ?? item.product?.totalPrice),
+                    Number(item.totalPrice ?? item.product?.totalPrice)
                   )}
                 </span>
               </li>
@@ -198,7 +198,7 @@ export default function ShipmentDescription({
                     className="h-6 w-6 opacity-0 mr-1 transition-opacity group-hover:opacity-100"
                     onClick={() =>
                       handleCopy(
-                        shipment.recipient.businessInfo.nameCorporateReason,
+                        shipment.recipient.businessInfo.nameCorporateReason
                       )
                     }
                   >
@@ -251,7 +251,7 @@ export default function ShipmentDescription({
                     className="h-6 w-6 opacity-0 mr-1 transition-opacity group-hover:opacity-100"
                     onClick={() =>
                       handleCopy(
-                        shipment.recipient.businessInfo.stateRegistration,
+                        shipment.recipient.businessInfo.stateRegistration
                       )
                     }
                   >
@@ -314,7 +314,7 @@ export default function ShipmentDescription({
                 )}{" "}
                 <a href="tel:">
                   {formatToBRPhone(
-                    shipment.recipient.businessInfo.phoneFax ?? "",
+                    shipment.recipient.businessInfo.phoneFax ?? ""
                   ) ?? "-"}
                 </a>
               </dd>
@@ -351,7 +351,7 @@ export default function ShipmentDescription({
           <time
             dateTime={format(
               shipment?.updatedAt || shipment?.createdAt,
-              "yyyy-MM-dd",
+              "yyyy-MM-dd"
             )}
           >
             {format(
@@ -359,7 +359,7 @@ export default function ShipmentDescription({
               "dd 'de' MMMM 'de' yyyy",
               {
                 locale: ptBR,
-              },
+              }
             )}
           </time>
         </div>

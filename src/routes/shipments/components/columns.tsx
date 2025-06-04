@@ -37,12 +37,69 @@ export const columns: (ColumnDef<SelectShipment> & { columnName?: string })[] =
     },
     {
       accessorKey: "number",
-      columnName: "Número",
+      columnName: "Referência",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Número" />
+        <DataTableColumnHeader column={column} title="Referência" />
       ),
       size: 150,
       enableHiding: false,
+      filterFn: (row, id, value) => {
+        const seamstressWords = (
+          row.original.recipient?.businessInfo.tradeName ||
+          (row.original.recipient?.businessInfo.nameCorporateReason?.split(
+            " "
+          )[0] ??
+            "")
+        )
+          .toLowerCase()
+          .split(" ")
+          .join(",")
+          .split(",");
+
+        const numberWords = row.original.number
+          .toLowerCase()
+          .split(" ")
+          .join(",")
+          .split(",");
+
+        const opsWords = row.original.items
+          .map((item) =>
+            item.shipmentItemToOrder?.order?.codeReference?.toLowerCase()
+          )
+          .join(",")
+          .split(",");
+
+        const descriptionWords = row.original.items
+          .map((item) => item.product?.description?.toLowerCase())
+          .join(",")
+          .split(",");
+
+        const issueDate = row.original.issueDate
+          ? format(new Date(row.original.issueDate), "dd/MM/yyyy")
+          : "";
+
+        return value.some((valuePart: string) =>
+          valuePart
+            .toLowerCase()
+            .split(" ")
+            .every(
+              (valueWord) =>
+                seamstressWords.some((sectionWord) =>
+                  sectionWord.includes(valueWord)
+                ) ||
+                numberWords.some((sectionWord) =>
+                  sectionWord.includes(valueWord)
+                ) ||
+                opsWords.some((sectionWord) =>
+                  sectionWord.includes(valueWord)
+                ) ||
+                descriptionWords.some((sectionWord) =>
+                  sectionWord.toLowerCase().includes(valueWord)
+                ) ||
+                issueDate.includes(valueWord)
+            )
+        );
+      },
     },
     {
       accessorKey: "recipient",
@@ -70,16 +127,14 @@ export const columns: (ColumnDef<SelectShipment> & { columnName?: string })[] =
           row.original.recipient?.businessInfo.tradeName ||
           row.original.recipient?.businessInfo.nameCorporateReason;
 
-        if (!rowValue) return false; // Return false if rowValue is null or undefined
+        if (!rowValue) return false;
 
-        // Split rowValue into words
-        const rowWords = rowValue.toLowerCase().split(" "); // Normalize to lowercase
+        const rowWords = rowValue.toLowerCase().split(" ");
 
-        // Iterate through the value array
         return value?.some((valuePart) =>
           valuePart
             .toLowerCase()
-            .split(" ") // Split each part into words
+            .split(" ")
             .every((valueWord) =>
               rowWords.some((rowWord) => rowWord.includes(valueWord))
             )
@@ -107,13 +162,15 @@ export const columns: (ColumnDef<SelectShipment> & { columnName?: string })[] =
                 "bg-yellow-500/60 text-white dark:bg-yellow-400/70",
               value === "Confirmado" && "bg-primary/80 text-primary-foreground",
               value === "Produzindo" &&
-                "bg-warning text-warning-foreground dark:bg-warning/70",
+                "bg-warning/80 text-warning-foreground dark:bg-warning/70",
+              value === "Produção parcial" &&
+                "bg-warning text-warning-foreground dark:bg-warning/90",
               value === "Finalizado" &&
                 "bg-success text-success-foreground  dark:bg-success/70",
               value === "Coletado" && "bg-muted text-muted-foreground",
               value === "Recusado" &&
                 "bg-destructive text-destructive-foreground",
-              "flex w-full items-center p-1 rounded-lg justify-center font-medium"
+              "flex w-full items-center p-1 rounded-lg justify-center font-medium text-nowrap"
             )}
           >
             <div className="shrink">
@@ -160,32 +217,16 @@ export const columns: (ColumnDef<SelectShipment> & { columnName?: string })[] =
       enableHiding: true,
     },
     {
-      accessorKey: "systemEstimation",
-      columnName: "Prazo estimado",
+      accessorKey: "informedEstimation",
+      columnName: "Prazo",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Prazo estimado" />
+        <DataTableColumnHeader column={column} title="Prazo" />
       ),
       size: 200,
       cell: ({ row }) => (
         <div className="w-full text-center">
           {row.original.systemEstimation
             ? format(new Date(row.original.systemEstimation!), "dd/MM/yyyy")
-            : "-"}
-        </div>
-      ),
-      enableHiding: true,
-    },
-    {
-      accessorKey: "informedEstimation",
-      columnName: "Prazo informado",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Prazo informado" />
-      ),
-      size: 200,
-      cell: ({ row }) => (
-        <div className="w-full text-center">
-          {row.original.informedEstimation
-            ? format(new Date(row.original.informedEstimation!), "dd/MM/yyyy")
             : "-"}
         </div>
       ),
@@ -214,8 +255,38 @@ export const columns: (ColumnDef<SelectShipment> & { columnName?: string })[] =
       enableHiding: true,
     },
     {
+      accessorKey: "description",
+      columnName: "Descrição",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Descrição" />
+      ),
+      size: 200,
+      cell: ({ row }) => {
+        const value = row.original.items
+          .map((item) => item.product?.description)
+          .join(", ");
+        return <div className="w-full text-left">{value}</div>;
+      },
+      enableHiding: true,
+    },
+    {
+      accessorKey: "ops",
+      columnName: "Ordem de Produção",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Ordem de Produção" />
+      ),
+      size: 200,
+      cell: ({ row }) => {
+        const value = row.original.items
+          .map((item) => item.shipmentItemToOrder?.order?.codeReference)
+          .join(", ");
+        return <div className="w-full text-left">{value}</div>;
+      },
+      enableHiding: true,
+    },
+    {
       id: "actions",
       size: 10,
-      cell: ({ row }) => <DataTableRowActions row={row} />,
+      cell: ({ table, row }) => <DataTableRowActions row={row} table={table} />,
     },
   ];

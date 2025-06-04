@@ -26,7 +26,6 @@ export default function Chats() {
   const location = useLocation();
   const room = useChatStore((state) => state.room);
   const setRoom = useChatStore((state) => state.setRoom);
-  const { session } = useGlobalStore();
 
   useShipments();
 
@@ -34,8 +33,6 @@ export default function Chats() {
 
   useBackofficeRealTimeData("chat", queryKeyFactory.chatRooms(), (data) => {
     const record = data as ChatMessage;
-
-    if (session?.user.id === record.senderId) return;
 
     queryClient.setQueryData(queryKeyFactory.chatRooms(), (oldData: Room[]) => {
       if (!oldData) return [];

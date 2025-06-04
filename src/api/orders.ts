@@ -12,3 +12,11 @@ export function useOrders() {
     initialData: [],
   });
 }
+
+export function useOrder(id: string) {
+  return useQuery({
+    queryKey: queryKeyFactory.order(id),
+    queryFn: fetchWithToken<SelectOrder>(`${route}/${id}`),
+    enabled: !!id,
+  });
+}

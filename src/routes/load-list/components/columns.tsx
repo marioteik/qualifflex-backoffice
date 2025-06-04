@@ -122,6 +122,8 @@ export const columns: (ColumnDef<SelectShipment> & { columnName?: string })[] =
             className={cn(
               value === "Pendente" &&
                 "bg-yellow-500/60 text-white dark:bg-yellow-400/70",
+              value === "Pendente aprovação" &&
+                "bg-yellow-500/80 text-white dark:bg-yellow-400/80",
               value === "Confirmado" && "bg-primary/80 text-primary-foreground",
               value === "Produzindo" &&
                 "bg-warning text-warning-foreground dark:bg-warning/70",

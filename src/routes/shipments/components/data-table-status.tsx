@@ -11,9 +11,12 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
-import { clearFieldsBasedOnStatus, status, statusOrder } from "../data/data";
-import { type SelectShipment, selectShipmentSchema } from "@/schemas/shipments";
-import { useUpdateShipment } from "@/api/shipments";
+import { status, statusOrder } from "../data/data";
+import {
+  type UpdateStatusShipment,
+  updateStatusShipmentSchema,
+} from "@/schemas/shipments";
+import { useUpdateShipmentStatus } from "@/api/shipments";
 import type { Dispatch, SetStateAction } from "react";
 
 interface DataTableStatus<TData> {
@@ -27,23 +30,19 @@ export function DataTableStatus<TData>({
   rowSelection,
   setRowSelection,
 }: DataTableStatus<TData>) {
-  const { mutate } = useUpdateShipment();
+  const { mutate } = useUpdateShipmentStatus();
 
   const handleSelect = (stat: (typeof statusOrder)[number]) => {
     try {
       const data = table.getSelectedRowModel().rows.map((row) => {
-        const shipment = row.original as SelectShipment;
+        const id = (row.original as UpdateStatusShipment).id;
 
         const updatedRow = {
-          ...shipment,
+          id,
           status: stat,
-          items: shipment.items.map(({ product, ...item }) => {
-            return item;
-          }),
-          ...clearFieldsBasedOnStatus(stat),
         };
 
-        const result = selectShipmentSchema.safeParse(updatedRow);
+        const result = updateStatusShipmentSchema.safeParse(updatedRow);
 
         if (!result.success) {
           throw result.error.errors;
@@ -80,18 +79,24 @@ export function DataTableStatus<TData>({
           Selecionados {rowSelection && Object.keys(rowSelection).length}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {status.map((item) => {
-          return (
-            <DropdownMenuItem
-              key={item.value}
-              className="capitalize"
-              onClick={() => handleSelect(item.value)}
-            >
-              <item.icon className="h-4 w-4 mr-1" />
-              {item.label}
-            </DropdownMenuItem>
-          );
-        })}
+        {status
+          .filter(
+            (item) =>
+              !item.value.toLowerCase().includes("parcial") &&
+              !item.value.toLowerCase().includes("pendente aprovação")
+          )
+          .map((item) => {
+            return (
+              <DropdownMenuItem
+                key={item.value}
+                className="capitalize"
+                onClick={() => handleSelect(item.value)}
+              >
+                <item.icon className="h-4 w-4 mr-1" />
+                {item.label}
+              </DropdownMenuItem>
+            );
+          })}
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -1,4 +1,3 @@
-import * as React from "react";
 import {
   flexRender,
   getCoreRowModel,
@@ -23,18 +22,8 @@ import {
 } from "@/components/ui/table";
 import { columns as defaultColumns } from "./columns";
 import { useOrders } from "@/api/orders";
-import type { SelectOrder } from "@/schemas/orders";
-import { useEffect } from "react";
 
-interface OrdersTableProps {
-  onSelectOrder?: (order: SelectOrder) => void;
-  selectedOrder?: SelectOrder | null;
-}
-
-export default function OrdersTable({
-  onSelectOrder,
-  selectedOrder,
-}: OrdersTableProps) {
+export default function OrdersTable() {
   const {
     row,
     setRow,
@@ -93,19 +82,9 @@ export default function OrdersTable({
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
-  function handleRowClick(order: SelectOrder) {
-    onSelectOrder?.(order);
-  }
-
-  useEffect(() => {
-    if (data.length > 0) {
-      onSelectOrder?.(data[0]);
-    }
-  }, [data]);
-
   return (
     <>
-      <div className="flex flex-1 flex-col justify-between gap-y-4 pr-4 pb-4">
+      <div className="flex flex-1 flex-col justify-between gap-y-4">
         <div className="space-y-4">
           <DataTableToolbar
             table={table}
@@ -137,15 +116,10 @@ export default function OrdersTable({
               <TableBody>
                 {table.getRowModel().rows.length ? (
                   table.getRowModel().rows.map((row) => {
-                    const isSelected = row.original.id === selectedOrder?.id;
                     return (
                       <TableRow
                         key={row.id}
                         data-state={row.getIsSelected() && "selected"}
-                        className={`cursor-pointer ${
-                          isSelected ? "bg-muted" : ""
-                        }`}
-                        onClick={() => handleRowClick(row.original)}
                       >
                         {row.getVisibleCells().map((cell) => (
                           <TableCell
@@ -167,7 +141,9 @@ export default function OrdersTable({
                       colSpan={defaultColumns.length}
                       className="h-[65px] text-center border-transparent dark:text-muted-foreground"
                     >
-                      {false ? "Carregando resultados" : "Nenhum resultado"}
+                      {data.length > 0
+                        ? "Carregando resultados"
+                        : "Nenhum resultado"}
                     </TableCell>
                   </TableRow>
                 )}
@@ -175,7 +151,7 @@ export default function OrdersTable({
             </Table>
           </div>
         </div>
-        <DataTablePagination table={table} compact />
+        <DataTablePagination table={table} />
       </div>
     </>
   );

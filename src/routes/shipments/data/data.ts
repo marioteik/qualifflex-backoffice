@@ -12,6 +12,7 @@ export const statusOrder = [
   "Pendente",
   "Confirmado",
   "Produzindo",
+  "Produção parcial",
   "Finalizado",
   "Coletado",
 ];
@@ -19,14 +20,24 @@ export const statusOrder = [
 export const status = [
   { label: "Recusado", value: "Recusado", icon: TicketX },
   { label: "Pendente", value: "Pendente", icon: LoaderCircle },
+  {
+    label: "Pendente aprovação",
+    value: "Pendente aprovação",
+    icon: LoaderCircle,
+  },
   { label: "Confirmado", value: "Confirmado", icon: BadgeCheck },
   { label: "Produzindo", value: "Produzindo", icon: ScissorsLineDashed },
+  {
+    label: "Produção parcial",
+    value: "Produção parcial",
+    icon: ScissorsLineDashed,
+  },
   { label: "Finalizado", value: "Finalizado", icon: BookmarkCheck },
   { label: "Coletado", value: "Coletado", icon: PackageCheck },
 ];
 
 export const clearFieldsBasedOnStatus = (
-  status: (typeof statusOrder)[number],
+  status: (typeof statusOrder)[number]
 ) => {
   switch (status) {
     case "Pendente":
@@ -35,7 +46,16 @@ export const clearFieldsBasedOnStatus = (
         deliveredAt: null,
         confirmedAt: null,
         collectedAt: null,
-        recusedAt: null,
+        refusedAt: null,
+        informedEstimation: null,
+      };
+    case "Pendente aprovação":
+      return {
+        finishedAt: null,
+        deliveredAt: null,
+        confirmedAt: null,
+        collectedAt: null,
+        refusedAt: null,
       };
     case "Recusado":
       return {
@@ -49,17 +69,23 @@ export const clearFieldsBasedOnStatus = (
         finishedAt: null,
         deliveredAt: null,
         collectedAt: null,
-        recusedAt: null,
+        refusedAt: null,
       };
     case "Produzindo":
       return {
         finishedAt: null,
-        recusedAt: null,
+        refusedAt: null,
+        collectedAt: null,
+      };
+    case "Produção parcial":
+      return {
+        finishedAt: null,
+        refusedAt: null,
         collectedAt: null,
       };
     case "Finalizado":
       return {
-        recusedAt: null,
+        refusedAt: null,
         collectedAt: null,
       };
     default:

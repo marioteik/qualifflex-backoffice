@@ -79,7 +79,7 @@ const initialState: InitialState = {
   row: {},
   pagination: {
     pageIndex: 0,
-    pageSize: 11,
+    pageSize: 10,
   },
   sorting: [{ id: "codeReference", desc: false }],
   columnFilters: [],

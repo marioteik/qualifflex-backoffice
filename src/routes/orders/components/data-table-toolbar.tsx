@@ -1,7 +1,6 @@
 import { Table, type RowSelectionState } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
 import { DataTableViewOptions } from "@/components/atoms/data-table-view-options";
+import { DebouncedInput } from "@/components/atoms/debounced-input";
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
@@ -11,28 +10,25 @@ interface DataTableToolbarProps<TData> {
 
 export function DataTableToolbar<TData>({
   table,
-  rowSelection,
-  setRowSelection,
 }: DataTableToolbarProps<TData>) {
-  const isFiltered = table.getState().columnFilters.length > 0;
+  const nameSearch = table.getColumn("codeReference")?.getFilterValue();
 
   return (
     <div className="flex items-center justify-between">
-      <div className="flex-1 inline-flex items-center space-x-2">
-        {/* If you want a filter for codeReference or createdAt, you can implement it here */}
-        {isFiltered && (
-          <Button
-            variant="ghost"
-            onClick={() => table.resetColumnFilters()}
-            className="h-8 px-2 lg:px-3"
-          >
-            Limpar
-            <X />
-          </Button>
-        )}
+      <div className="flex flex-1 items-center space-x-2">
+        <DebouncedInput
+          value={nameSearch as string}
+          className="md:text-sm h-8 w-[260px]"
+          debounce={200}
+          onChange={(value) => {
+            table.getColumn("codeReference")?.setFilterValue(value);
+          }}
+          placeholder="OP, Remessa, Material e Emissão"
+        />
       </div>
+
       <div className="inline-flex gap-2">
-        <DataTableViewOptions table={table} />
+        <DataTableViewOptions table={table} hideColumns={["materials"]} />
       </div>
     </div>
   );

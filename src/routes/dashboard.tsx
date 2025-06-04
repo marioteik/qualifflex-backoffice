@@ -6,10 +6,7 @@ import { format } from "date-fns";
 import { AlertCircle, CheckCircle, Package, Truck, Users } from "lucide-react";
 import { useMemo } from "react";
 import {
-  LineChart,
-  Line,
   XAxis,
-  YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
@@ -19,6 +16,7 @@ import {
 
 const statusColors = {
   Pendente: "bg-muted",
+  "Pendente aprovação": "bg-muted",
   Confirmado: "bg-muted",
   Produzindo: "bg-muted",
   Finalizado: "bg-muted",
