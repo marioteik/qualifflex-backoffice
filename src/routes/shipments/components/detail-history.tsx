@@ -116,15 +116,17 @@ export default function ShipmentDetailHistory({
                 {/* Content */}
                 <div className="ml-4 flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-medium text-gray-900">{item.status}</h4>
-                    <span className="text-xs text-gray-500">
+                    <h4 className="font-medium text-foreground">
+                      {item.status}
+                    </h4>
+                    <span className="text-xs text-muted-foreground">
                       {item.updated_at}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     {item.description}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     Por: {item.updated_by}
                   </p>
                 </div>

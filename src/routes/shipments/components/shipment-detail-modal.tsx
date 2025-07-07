@@ -2,7 +2,7 @@ import { useShipmentsStore } from "@/routes/shipments/data/store";
 import { useShallow } from "zustand/react/shallow";
 import { useShipment } from "@/api/shipments";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, Copy, Share, Truck, X } from "lucide-react";
 import { formatToBRNumber } from "@/lib/utils/formatters";
@@ -58,7 +58,7 @@ export default function ShipmentDetailModal() {
       setIsDetailModalOpen(false);
       setSelectedShipmentId(null);
     }
-  }, [location.pathname]);
+  }, [location.pathname, selectedShipmentId, isDetailModalOpen, setSelectedShipmentId, setIsDetailModalOpen]);
 
   const handleClose = () => {
     setIsDetailModalOpen(false);
@@ -81,7 +81,7 @@ export default function ShipmentDetailModal() {
   if (isLoading) {
     return (
       <Dialog open={isDetailModalOpen} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl h-[96vh] overflow-y-auto">
           <Card className="flex items-center justify-center min-h-[400px] border-0 shadow-none">
             <div className="flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -96,7 +96,7 @@ export default function ShipmentDetailModal() {
   if (error || !shipment) {
     return (
       <Dialog open={isDetailModalOpen} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl h-[96vh] overflow-y-auto">
           <Card className="flex items-center justify-center min-h-[400px] border-0 shadow-none">
             <div className="text-center">
               <p className="text-destructive mb-2">
@@ -117,7 +117,7 @@ export default function ShipmentDetailModal() {
 
   return (
     <Dialog open={isDetailModalOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto p-0">
+      <DialogContent className="max-w-6xl h-[96vh] overflow-y-auto p-0">
         <div className="flex flex-col h-full">
           {/* Close button */}
           <div className="absolute right-4 top-4 z-10">

@@ -7,8 +7,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { EllipsisVertical, EyeIcon } from "lucide-react";
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useCallback } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 import { useOrdersStore } from "../data/store";
 import { useShallow } from "zustand/react/shallow";
@@ -16,21 +16,46 @@ import type { OrdersRow } from "../data/store";
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
-  detailPath?: string;
 }
 
 export function DataTableRowActions<TData>({
   row,
-  detailPath,
 }: DataTableRowActionsProps<TData>) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [open, setOpen] = React.useState(false);
-  const { setRow, setIsEditOpen, setIsDeleteOpen } = useOrdersStore(
+
+  const {
+    setRow,
+    setIsEditOpen,
+    setIsDeleteOpen,
+    setIsDetailModalOpen,
+    setSelectedOrderId,
+  } = useOrdersStore(
     useShallow((state) => ({
       setRow: state.setRow,
       setIsEditOpen: state.setIsEditOpen,
       setIsDeleteOpen: state.setIsDeleteOpen,
+      setIsDetailModalOpen: state.setIsDetailModalOpen,
+      setSelectedOrderId: state.setSelectedOrderId,
     }))
   );
+
+  const handleOpenDetail = useCallback(() => {
+    const orderId = (row.original as any).id;
+
+    // Set the order ID and open modal
+    setSelectedOrderId(orderId);
+    setIsDetailModalOpen(true);
+    // Update URL to support deep linking
+    navigate(`${location.pathname}/${orderId}`, { replace: true });
+  }, [
+    row.original,
+    setSelectedOrderId,
+    setIsDetailModalOpen,
+    navigate,
+    location.pathname,
+  ]);
 
   function handleEdit() {
     setRow(row.original as OrdersRow);
@@ -44,18 +69,14 @@ export function DataTableRowActions<TData>({
 
   return (
     <div className="inline-flex items-center justify-end w-full gap-2">
-      {detailPath && (
-        <Button
-          variant="ghost"
-          className="flex h-8 w-8 p-0 data-[state=open]:bg-muted"
-          asChild
-        >
-          <Link to={detailPath}>
-            <EyeIcon className="h-4 w-4" />
-            <span className="sr-only">Ver detalhes</span>
-          </Link>
-        </Button>
-      )}
+      <Button
+        variant="ghost"
+        className="flex h-8 w-8 p-0 data-[state=open]:bg-muted"
+        onClick={handleOpenDetail}
+      >
+        <EyeIcon className="h-4 w-4" />
+        <span className="sr-only">Ver detalhes</span>
+      </Button>
 
       <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger asChild>

@@ -8,6 +8,7 @@ import { insertProductSchema } from "./products";
 import { selectShipmentItemSchema } from "./shipment-items";
 import { timestamps } from "./timestamps";
 import { dateParser } from "./utils";
+import { selectOrderToBuySchema } from "./order-to-buy";
 
 const insertShipmentSchema = timestamps.extend({
   number: z.string().min(1, "Number is required and cannot be empty"),
@@ -38,6 +39,7 @@ const selectShipmentSchema = insertShipmentSchema.merge(
     recipient: selectSeamstressSchema,
     financialCalc: selectFinancialCalculationSchema,
     items: selectShipmentItemSchema.array(),
+    ordersToBuy: selectOrderToBuySchema.array(),
     confirmedAt: dateParser.nullable().optional(),
     deliveredAt: dateParser.nullable().optional(),
     refusedAt: dateParser.nullable().optional(),

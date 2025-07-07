@@ -152,8 +152,17 @@ export const useProductsStore = create<State>()(
                 : visibility,
           })),
 
-        resetStore: () => {
+        resetStore: (_path: string) => {
           const _initialState = { ...initialState };
+          
+          // Check if there's a search parameter in the URL
+          const urlParams = new URLSearchParams(window.location.search);
+          const searchTerm = urlParams.get('search');
+          
+          if (searchTerm) {
+            // If there's a search term, set it as a column filter
+            _initialState.columnFilters = [{ id: 'code', value: searchTerm }];
+          }
 
           set({ ..._initialState });
         },

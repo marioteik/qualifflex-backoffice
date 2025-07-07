@@ -25,6 +25,12 @@ interface State {
   isDisableOpen: boolean;
   setIsDisableOpen: (value: boolean) => void;
 
+  isDetailModalOpen: boolean;
+  setIsDetailModalOpen: (isDetailModalOpen: boolean) => void;
+
+  selectedOrderId: string | null;
+  setSelectedOrderId: (selectedOrderId: string | null) => void;
+
   setIsClose: () => void;
 
   row: RowSelectionState;
@@ -63,6 +69,8 @@ type InitialState = Omit<
   | "setIsEditOpen"
   | "setIsDeleteOpen"
   | "setIsDisableOpen"
+  | "setIsDetailModalOpen"
+  | "setSelectedOrderId"
   | "setIsClose"
   | "setRow"
   | "setPagination"
@@ -76,6 +84,8 @@ const initialState: InitialState = {
   isEditOpen: false,
   isDeleteOpen: false,
   isDisableOpen: false,
+  isDetailModalOpen: false,
+  selectedOrderId: null,
   row: {},
   pagination: {
     pageIndex: 0,
@@ -96,11 +106,24 @@ export const useOrdersStore = create<State>()(
         setIsDeleteOpen: (isDeleteOpen) => set(() => ({ isDeleteOpen })),
         setIsDisableOpen: (isDisableOpen) => set(() => ({ isDisableOpen })),
 
+        setIsDetailModalOpen: (isDetailModalOpen) =>
+          set((state) => ({
+            isDetailModalOpen:
+              typeof isDetailModalOpen === "boolean"
+                ? isDetailModalOpen
+                : !state.isDetailModalOpen,
+          })),
+
+        setSelectedOrderId: (selectedOrderId) =>
+          set(() => ({ selectedOrderId })),
+
         setIsClose: () =>
           set({
             isEditOpen: false,
             isDeleteOpen: false,
             isDisableOpen: false,
+            isDetailModalOpen: false,
+            selectedOrderId: null,
             row: {},
           }),
 

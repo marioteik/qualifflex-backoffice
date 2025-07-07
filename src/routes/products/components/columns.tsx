@@ -46,6 +46,39 @@ export const columns: (ColumnDef<SelectProduct> & { columnName?: string })[] = [
       <DataTableColumnHeader column={column} title="Código" />
     ),
     size: 10,
+    filterFn: (row, id, value: string) => {
+      console.log(value);
+
+      const codeReference = row.original.code
+        .toLowerCase()
+        .split(" ")
+        .join(",")
+        .split(",");
+
+      const descriptionWords = row.original.description
+        ?.toLowerCase()
+        .split(" ")
+        .join(",")
+        .split(",");
+
+      return value
+        .replace(" ", ",")
+        .split(",")
+        .some((valuePart: string) =>
+          valuePart
+            .toLowerCase()
+            .split(" ")
+            .every(
+              (valueWord) =>
+                codeReference.some((sectionWord) =>
+                  sectionWord.includes(valueWord)
+                ) ||
+                descriptionWords.some((sectionWord) =>
+                  sectionWord.includes(valueWord)
+                )
+            )
+        );
+    },
   },
   {
     accessorKey: "description",

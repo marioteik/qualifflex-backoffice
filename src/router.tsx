@@ -25,7 +25,6 @@ import Chats from "./routes/chats";
 import LoadList from "@/routes/load-list";
 import Products from "@/routes/products";
 import Orders from "@/routes/orders";
-import OrderDetail from "@/routes/orders/order-detail";
 import apiClient from "./api-client";
 import ForgotPassword from "./routes/auth/forgot-password";
 import ShipmentsImports from "./routes/shipments-imports";
@@ -252,17 +251,17 @@ const router = createBrowserRouter([
               ),
             },
             children: [
-              {
-                path: ":id",
+          {
+            path: ":id",
                 element: <Shipments key="archive" />,
-                handle: {
+            handle: {
                   crumb: () => (
                     <BreadcrumbLink asChild>
                       <Link to="/shipments/arquivo">Arquivo</Link>
                     </BreadcrumbLink>
                   ),
                 },
-              },
+            },
             ],
           },
         ],
@@ -335,9 +334,9 @@ const router = createBrowserRouter([
           },
           {
             path: ":id",
-            element: <OrderDetail />,
+            element: <Orders />,
             handle: {
-              crumb: () => <BreadcrumbLink>Detalhes do Pedido</BreadcrumbLink>,
+              crumb: () => <BreadcrumbLink>Ordens de Produção</BreadcrumbLink>,
             },
           },
         ],

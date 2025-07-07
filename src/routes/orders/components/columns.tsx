@@ -128,11 +128,6 @@ export const columns: (ColumnDef<ListOrders> & { columnName?: string })[] = [
     enableSorting: false,
     enableHiding: false,
     size: 10,
-    cell: ({ row }) => (
-      <DataTableRowActions
-        row={row}
-        detailPath={`/orders/${row.original.id}`}
-      />
-    ),
+    cell: ({ row }) => <DataTableRowActions row={row} />,
   },
 ];
