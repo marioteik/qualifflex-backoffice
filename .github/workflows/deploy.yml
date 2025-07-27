@@ -41,8 +41,17 @@ jobs:
       - name: Build application
         run: |
           echo "🔨 Building application..."
-          echo "Build environment check:"
-          echo "NODE_ENV: $NODE_ENV"
+          echo "Environment variables visible to build:"
+          echo "VITE_BASE_PATH: '$VITE_BASE_PATH'"
+          echo "VITE_API_DOMAIN: '$VITE_API_DOMAIN'"
+          
+          # Load .env into current shell environment
+          export $(grep -v '^#' .env | xargs)
+          
+          echo "After loading .env:"
+          echo "VITE_BASE_PATH: '$VITE_BASE_PATH'"
+          echo "VITE_API_DOMAIN: '$VITE_API_DOMAIN'"
+          
           npm run build
           
           echo "📦 Build completed. Checking build output:"
