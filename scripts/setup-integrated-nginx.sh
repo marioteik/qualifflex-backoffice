@@ -168,7 +168,7 @@ server {
         
         # Temporary: Return information about available services
         location = / {
-            return 200 "Available services:\n/api - Qualiflex API\n/backoffice - Qualiflex Backoffice\n/ - WordPress (coming soon)";
+            return 200 "Em manutenção";
             add_header Content-Type text/plain;
         }
     }
