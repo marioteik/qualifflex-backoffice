@@ -25,8 +25,9 @@ jobs:
       - name: Create environment file
         run: |
           cat > .env << EOF
-          VITE_BASE_PATH=${{ vars.VITE_BASE_PATH || '/backoffice/' }}
+          VITE_BASE_PATH=${{ vars.VITE_BASE_PATH }}
           VITE_API_DOMAIN=${{ vars.VITE_API_DOMAIN }}
+          VITE_GOOGLE_MAPS_API_KEY=${{ vars.VITE_GOOGLE_MAPS_API_KEY }}
           EOF
 
       - name: Build application
