@@ -84,6 +84,21 @@ The GitHub Actions workflow automatically creates a `.env` file from these varia
 - `VITE_BASE_PATH`: `/backoffice/`
 - `VITE_API_DOMAIN`: `http://ec2-54-207-116-215.sa-east-1.compute.amazonaws.com`
 
+### Verifying Variables Are Set
+
+You can verify your variables are configured correctly by:
+
+1. **Check Repository Variables**: Go to `Settings > Secrets and variables > Actions > Variables`
+2. **Check GitHub Actions Logs**: Look for the "Create environment file" step output
+3. **Variable Names**: Ensure variable names are **exactly** as shown (case-sensitive)
+
+**Common Issues:**
+
+- ❌ Variable name typos (e.g., `VITE_BASE_PATH` vs `VITE_BASEPATH`)
+- ❌ Variables set as Secrets instead of Variables
+- ❌ Variables set in different repository
+- ❌ Incorrect variable values (missing trailing slash, wrong protocol)
+
 ## Troubleshooting
 
 ### Asset Loading Issues (404s, MIME type errors)
@@ -93,11 +108,28 @@ If you see errors like:
 - `Failed to load resource: 404 (Not Found)` for CSS/JS files
 - `MIME type ('text/html') is not a supported stylesheet MIME type`
 
-This indicates the base path is incorrectly configured. Make sure:
+This indicates the base path is incorrectly configured. **Debug steps:**
 
-1. `VITE_BASE_PATH` environment variable matches your deployment path
-2. Nginx configuration serves files from the correct location
-3. The build was created with the right base path
+1. **Check GitHub Actions Logs**:
+
+   - Look for "Create environment file" step
+   - Verify VITE_BASE_PATH value is displayed correctly
+   - Check "Build application" step shows correct asset paths in index.html
+
+2. **Verify GitHub Variables**:
+
+   - Ensure `VITE_BASE_PATH` is set to `/backoffice/` (with trailing slash)
+   - Variable must be in **Variables** tab, not Secrets
+   - Check variable name is exactly `VITE_BASE_PATH` (case-sensitive)
+
+3. **Check Built Assets**:
+
+   - Assets should be referenced as `/backoffice/assets/...` in index.html
+   - If showing `/assets/...` the base path wasn't applied
+
+4. **Nginx Configuration**:
+   - Verify nginx serves files from correct location
+   - Check permissions are set correctly
 
 ### React Router Issues (404s on page refresh, wrong URLs)
 

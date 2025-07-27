@@ -24,14 +24,34 @@ jobs:
 
       - name: Create environment file
         run: |
+          echo "🔍 Creating .env file with variables:"
+          echo "VITE_BASE_PATH: '${{ vars.VITE_BASE_PATH }}'"
+          echo "VITE_API_DOMAIN: '${{ vars.VITE_API_DOMAIN }}'"
+          echo "VITE_GOOGLE_MAPS_API_KEY: '${{ vars.VITE_GOOGLE_MAPS_API_KEY }}'"
+          
           cat > .env << EOF
-          VITE_BASE_PATH=${{ vars.VITE_BASE_PATH }}
-          VITE_API_DOMAIN=${{ vars.VITE_API_DOMAIN }}
+          VITE_BASE_PATH=${{ vars.VITE_BASE_PATH || '/backoffice/' }}
+          VITE_API_DOMAIN=${{ vars.VITE_API_DOMAIN || 'http://ec2-54-207-116-215.sa-east-1.compute.amazonaws.com' }}
           VITE_GOOGLE_MAPS_API_KEY=${{ vars.VITE_GOOGLE_MAPS_API_KEY }}
           EOF
+          
+          echo "📄 .env file contents:"
+          cat .env
 
       - name: Build application
-        run: npm run build
+        run: |
+          echo "🔨 Building application..."
+          echo "Build environment check:"
+          echo "NODE_ENV: $NODE_ENV"
+          npm run build
+          
+          echo "📦 Build completed. Checking build output:"
+          ls -la dist/
+          
+          echo "🔍 Checking index.html for base path:"
+          if [ -f "dist/index.html" ]; then
+            grep -n "href\|src" dist/index.html | head -5
+          fi
 
       - name: Create deployment package
         run: |
