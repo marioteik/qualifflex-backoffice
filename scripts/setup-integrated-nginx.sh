@@ -105,18 +105,18 @@ server {
         proxy_busy_buffers_size 256k;
     }
     
-    # Backoffice static files - handle both exact match and subpaths
-    location ~ ^/backoffice(?:/(.*))?$ {
-        alias /home/__USERNAME__/apps/qualiflex-backoffice/current/dist;
-        
-        # Set the path to look for, defaulting to empty string
-        set $path $1;
-        if ($path = "") {
-            set $path "index.html";
-        }
+    # Redirect /backoffice (without slash) to /backoffice/
+    location = /backoffice {
+        return 301 /backoffice/;
+    }
+    
+    # Backoffice static files
+    location /backoffice/ {
+        alias /home/__USERNAME__/apps/qualiflex-backoffice/current/dist/;
+        index index.html;
         
         # Try to serve the file, then directory, then fallback to index.html for SPA
-        try_files /$path /$path/ /index.html;
+        try_files $uri $uri/ /backoffice/index.html;
         
         # Cache static assets
         location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
