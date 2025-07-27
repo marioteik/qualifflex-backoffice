@@ -7,6 +7,7 @@ import apiClient from "@/api-client";
 import { useGlobalStore } from "@/stores/global-store";
 import { AxiosError } from "axios";
 import { useShallow } from "zustand/react/shallow";
+import { getApiUrl } from "@/lib/utils/api-url";
 
 let timeout: NodeJS.Timeout;
 
@@ -32,9 +33,7 @@ export default function useLocationChangeMiddleware() {
       try {
         const data = await queryClient.fetchQuery({
           queryKey: queryKeyFactory.verify(),
-          queryFn: fetchWithToken(
-            import.meta.env.VITE_API_DOMAIN + "/api/auth/verify"
-          ),
+          queryFn: fetchWithToken(getApiUrl("/auth/verify")),
         });
 
         if ((data as { verify: boolean }).verify === false) {
@@ -50,12 +49,9 @@ export default function useLocationChangeMiddleware() {
 
           try {
             if (session) {
-              const data = await apiClient.post(
-                import.meta.env.VITE_API_DOMAIN + "/api/auth/refresh",
-                {
-                  refreshToken: session.refresh_token,
-                }
-              );
+              const data = await apiClient.post("/auth/refresh", {
+                refreshToken: session.refresh_token,
+              });
 
               return setSession(data.data.session);
             }

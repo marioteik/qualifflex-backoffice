@@ -3,11 +3,19 @@ import { AuthResponse } from "@supabase/supabase-js";
 import { useGlobalStore } from "@/stores/global-store";
 import { isBefore, subMinutes } from "date-fns";
 
+// Ensure API domain includes /api path for nginx routing
+const getApiBaseUrl = () => {
+  const apiDomain = import.meta.env.VITE_API_DOMAIN || "";
+  const baseUrl = apiDomain.endsWith("/api") ? apiDomain : `${apiDomain}/api`;
+  console.log(`🔗 API Client baseURL: ${baseUrl}`);
+  return baseUrl;
+};
+
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_DOMAIN,
+  baseURL: getApiBaseUrl(),
 });
 
-const refreshEndpoint = "/api/auth/refresh";
+const refreshEndpoint = "/auth/refresh";
 
 const refreshToken = async () => {
   const session = useGlobalStore.getState().session;

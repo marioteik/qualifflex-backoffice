@@ -30,6 +30,7 @@ import apiClient from "./api-client";
 import ForgotPassword from "./routes/auth/forgot-password";
 import ShipmentsImports from "./routes/shipments-imports";
 import axios from "axios";
+import { getApiUrl } from "@/lib/utils/api-url";
 
 // Get the base path from environment variable and normalize it
 const getBasename = () => {
@@ -58,14 +59,11 @@ const router = createBrowserRouter(
           const expiresIn = hashParams.get("expires_in");
           const tokenType = hashParams.get("token_type");
 
-          const { data, status } = await axios.get(
-            import.meta.env.VITE_API_DOMAIN + "/api/auth/verify",
-            {
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-              },
-            }
-          );
+          const { data, status } = await axios.get(getApiUrl("/auth/verify"), {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          });
 
           if (status !== 200) {
             return redirect("/auth/sign-in");
@@ -477,9 +475,7 @@ const router = createBrowserRouter(
         {
           path: "sign-out",
           loader: async () => {
-            apiClient.post(
-              import.meta.env.VITE_API_DOMAIN + "/api/auth/sign-out"
-            );
+            apiClient.post("/auth/sign-out");
             destroySession();
             return redirect("/auth/sign-in");
           },

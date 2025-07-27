@@ -72,6 +72,12 @@ VITE_API_DOMAIN = http://ec2-54-207-116-215.sa-east-1.compute.amazonaws.com
 
 ⚠️ **Important**: `VITE_API_DOMAIN` should be the base domain **without** `/api`. The application automatically appends `/api` for nginx routing.
 
+**API URL Construction:**
+
+- **VITE_API_DOMAIN**: `http://ec2-54-207-116-215.sa-east-1.compute.amazonaws.com`
+- **Actual API calls**: `http://ec2-54-207-116-215.sa-east-1.compute.amazonaws.com/api/auth/sign-in`
+- **WebSocket**: `http://ec2-54-207-116-215.sa-east-1.compute.amazonaws.com/api/backoffice-updates`
+
 **For Custom Domain Deployment:**
 
 ```
@@ -159,6 +165,12 @@ This indicates `VITE_API_DOMAIN` is not properly configured:
 
 1. **Check GitHub Actions Variables**: Ensure `VITE_API_DOMAIN` is set in repository variables
 2. **Verify Build Process**: Check the workflow creates the `.env` file correctly
-3. **For EC2 deployment**: `VITE_API_DOMAIN="http://ec2-54-207-116-215.sa-east-1.compute.amazonaws.com"`
-4. **For custom domain**: `VITE_API_DOMAIN="http://api.qualiflex.com.br"`
-5. **For local development**: Create `.env.local` with `VITE_API_DOMAIN="http://localhost:3100"`
+3. **Check Build Logs**: Look for "🔗 API Client baseURL" and "🔌 WebSocket connecting to" messages
+4. **For EC2 deployment**: `VITE_API_DOMAIN="http://ec2-54-207-116-215.sa-east-1.compute.amazonaws.com"`
+5. **For custom domain**: `VITE_API_DOMAIN="http://api.qualiflex.com.br"`
+6. **For local development**: Create `.env.local` with `VITE_API_DOMAIN="http://localhost:3100"`
+
+**Expected API URLs (auto-generated):**
+
+- Auth: `{VITE_API_DOMAIN}/api/auth/sign-in`
+- WebSocket: `{VITE_API_DOMAIN}/api/backoffice-updates`

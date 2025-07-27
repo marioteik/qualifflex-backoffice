@@ -12,6 +12,7 @@ export default defineConfig(({ mode }) => {
 
   console.log(`🔧 Vite Config - Mode: ${mode}`);
   console.log(`🔧 VITE_BASE_PATH: '${env.VITE_BASE_PATH}'`);
+  console.log(`🔧 VITE_API_DOMAIN: '${env.VITE_API_DOMAIN}'`);
   console.log(`🔧 Using base path: '${env.VITE_BASE_PATH || "/"}'`);
 
   return {
