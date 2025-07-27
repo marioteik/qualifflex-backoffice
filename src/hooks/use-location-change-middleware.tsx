@@ -49,7 +49,7 @@ export default function useLocationChangeMiddleware() {
 
           try {
             if (session) {
-              const data = await apiClient.post("/auth/refresh", {
+              const data = await apiClient.post("/api/auth/refresh", {
                 refreshToken: session.refresh_token,
               });
 

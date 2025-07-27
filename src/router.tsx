@@ -475,7 +475,7 @@ const router = createBrowserRouter(
         {
           path: "sign-out",
           loader: async () => {
-            apiClient.post("/auth/sign-out");
+            apiClient.post("/api/auth/sign-out");
             destroySession();
             return redirect("/auth/sign-in");
           },
