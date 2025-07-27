@@ -270,6 +270,28 @@ EOF
 print_status "Configuring paths for user: $USER"
 sudo sed -i "s|__USERNAME__|$USER|g" "$NGINX_CONFIG"
 
+# Fix permissions for nginx to access the backoffice files
+print_status "Setting up proper permissions for nginx access..."
+if [ -d "/home/$USER/apps/qualiflex-backoffice/current/dist" ]; then
+    # Make home directory accessible to nginx (needed for path traversal)
+    sudo chmod 755 /home/$USER
+    # Make apps directory accessible
+    sudo chmod 755 /home/$USER/apps
+    # Make qualiflex-backoffice directory accessible
+    sudo chmod 755 /home/$USER/apps/qualiflex-backoffice
+    # Make current directory accessible
+    sudo chmod 755 /home/$USER/apps/qualiflex-backoffice/current
+    # Make dist directory accessible and set proper permissions
+    sudo chmod 755 /home/$USER/apps/qualiflex-backoffice/current/dist
+    # Ensure all files are readable
+    sudo find /home/$USER/apps/qualiflex-backoffice/current/dist -type f -exec chmod 644 {} \;
+    # Ensure all directories are accessible
+    sudo find /home/$USER/apps/qualiflex-backoffice/current/dist -type d -exec chmod 755 {} \;
+    print_success "Permissions set correctly for nginx access"
+else
+    print_warning "Backoffice dist directory not found, permissions will be set during deployment"
+fi
+
 # Enable the integrated configuration
 print_status "Enabling Qualiflex Integrated configuration..."
 sudo ln -sf "$NGINX_CONFIG" /etc/nginx/sites-enabled/qualiflex-integrated

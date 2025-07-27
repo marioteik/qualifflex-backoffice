@@ -84,15 +84,22 @@ jobs:
             tar -xzf deployment.tar.gz
             rm deployment.tar.gz
 
-            # Set proper permissions
+            # Set proper permissions for files and directories
             find dist/ -type f -exec chmod 644 {} \;
             find dist/ -type d -exec chmod 755 {} \;
 
-                         # Setup integrated nginx configuration if script exists
-             if [ -f "scripts/setup-integrated-nginx.sh" ]; then
-               chmod +x scripts/setup-integrated-nginx.sh
-               ./scripts/setup-integrated-nginx.sh
-             fi
+            # Fix permissions for nginx access (crucial for avoiding 403 errors)
+            sudo chmod 755 /home/${{ secrets.EC2_USERNAME }}
+            sudo chmod 755 /home/${{ secrets.EC2_USERNAME }}/apps
+            sudo chmod 755 /home/${{ secrets.EC2_USERNAME }}/apps/qualiflex-backoffice
+            sudo chmod 755 /home/${{ secrets.EC2_USERNAME }}/apps/qualiflex-backoffice/current
+            sudo chmod 755 /home/${{ secrets.EC2_USERNAME }}/apps/qualiflex-backoffice/current/dist
+
+            # Setup integrated nginx configuration if script exists
+            if [ -f "scripts/setup-integrated-nginx.sh" ]; then
+              chmod +x scripts/setup-integrated-nginx.sh
+              ./scripts/setup-integrated-nginx.sh
+            fi
 
       - name: Update nginx configuration
         uses: appleboy/ssh-action@v1.0.3
