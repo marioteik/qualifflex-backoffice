@@ -88,11 +88,11 @@ jobs:
             find dist/ -type f -exec chmod 644 {} \;
             find dist/ -type d -exec chmod 755 {} \;
 
-            # Setup nginx configuration if script exists
-            if [ -f "scripts/setup-backoffice-nginx.sh" ]; then
-              chmod +x scripts/setup-backoffice-nginx.sh
-              ./scripts/setup-backoffice-nginx.sh
-            fi
+                         # Setup integrated nginx configuration if script exists
+             if [ -f "scripts/setup-integrated-nginx.sh" ]; then
+               chmod +x scripts/setup-integrated-nginx.sh
+               ./scripts/setup-integrated-nginx.sh
+             fi
 
       - name: Update nginx configuration
         uses: appleboy/ssh-action@v1.0.3
