@@ -37,8 +37,6 @@ NGINX_CONFIG="/etc/nginx/sites-available/qualiflex-backoffice"
 # Create the nginx configuration
 sudo tee "$NGINX_CONFIG" > /dev/null << 'EOF'
 # Nginx configuration for Qualiflex Backoffice
-# Increase server names hash bucket size for long domain names
-server_names_hash_bucket_size 128;
 
 # Server block for EC2 domain with /backoffice path
 server {
