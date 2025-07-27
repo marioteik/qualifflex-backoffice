@@ -1,9 +1,26 @@
-name: Deploy Backoffice to EC2
+name: Deploy Qualiflex Backoffice
 
 on:
+  workflow_dispatch:
+    inputs:
+      target_environment:
+        description: "Target environment"
+        required: true
+        default: "production"
+        type: choice
+        options:
+          - production
+          - staging
   push:
-    branches: [main]
-  workflow_dispatch: # Allow manual deployment
+    branches:
+      - main
+    paths:
+      - "src/**"
+      - "public/**"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.ts"
+      - ".github/workflows/deploy.yml"
 
 jobs:
   deploy:
@@ -61,14 +78,7 @@ jobs:
             grep -n "href\|src" dist/index.html | head -5
           fi
 
-      - name: Create deployment package
-        run: |
-          # Create deployment package with only built files
-          tar -czf deployment.tar.gz dist/
-
-          echo "📦 Created deployment package with dist/ folder"
-
-      - name: Setup deployment directory
+      - name: Deploy Backoffice to Server
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -76,119 +86,165 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           port: ${{ secrets.EC2_PORT || 22 }}
           timeout: 30s
-          command_timeout: 5m
+          command_timeout: 10m
           script: |
-            # Create nginx web directory structure
-            sudo mkdir -p /var/www/html/backoffice
-            sudo chown -R ${{ secrets.EC2_USERNAME }}:www-data /var/www/html/backoffice
+            echo "🚀 Starting Qualiflex Backoffice deployment..."
+            echo "Environment: ${{ inputs.target_environment || 'production' }}"
 
-            # Create temp staging directory
-            sudo mkdir -p /home/${{ secrets.EC2_USERNAME }}/apps/qualiflex-backoffice
-            sudo chown -R ${{ secrets.EC2_USERNAME }}:${{ secrets.EC2_USERNAME }} /home/${{ secrets.EC2_USERNAME }}/apps/qualiflex-backoffice
-
-            cd /home/${{ secrets.EC2_USERNAME }}/apps/qualiflex-backoffice
+            # Create the correct nginx web directory structure
+            echo "📁 Setting up web directories..."
+            sudo mkdir -p /var/www/html/backoffice/build
 
             # Backup current deployment if it exists
-            if [ -d "current" ]; then
-              rm -rf backup
-              mv current backup
+            if [ -d "/var/www/html/backoffice/build" ] && [ "$(ls -A /var/www/html/backoffice/build 2>/dev/null)" ]; then
+              echo "💾 Backing up current deployment..."
+              sudo rm -rf /var/www/html/backoffice/build.backup
+              sudo cp -r /var/www/html/backoffice/build /var/www/html/backoffice/build.backup
             fi
 
-            # Create new deployment directory
-            mkdir -p current
+            # Create staging directory
+            STAGING_DIR="/home/ubuntu/apps/qualiflex-backoffice-staging"
+            mkdir -p $STAGING_DIR
+            cd $STAGING_DIR
 
-      - name: Upload deployment package
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: ${{ secrets.EC2_PORT || 22 }}
-          source: "deployment.tar.gz"
-          target: "/home/${{ secrets.EC2_USERNAME }}/apps/qualiflex-backoffice/current"
+            # Clone or update repository
+            REPO_URL="https://github.com/${{ github.repository }}.git"
+            BRANCH="${{ github.ref_name }}"
 
-      - name: Extract and deploy files
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: ${{ secrets.EC2_PORT || 22 }}
-          timeout: 30s
-          command_timeout: 5m
-          script: |
-            cd /home/${{ secrets.EC2_USERNAME }}/apps/qualiflex-backoffice/current
-
-            # Extract deployment package
-            tar -xzf deployment.tar.gz
-            rm deployment.tar.gz
-
-            # Backup current web files if they exist
-            if [ -d "/var/www/html/backoffice/dist" ]; then
-              sudo rm -rf /var/www/html/backoffice/dist.backup
-              sudo mv /var/www/html/backoffice/dist /var/www/html/backoffice/dist.backup
-            fi
-
-            # Copy built files to web directory
-            sudo cp -r dist/ /var/www/html/backoffice/
-
-            # Set proper permissions for web server access
-            sudo chown -R www-data:www-data /var/www/html/backoffice/dist
-            sudo find /var/www/html/backoffice/dist -type f -exec chmod 644 {} \;
-            sudo find /var/www/html/backoffice/dist -type d -exec chmod 755 {} \;
-
-            # Ensure parent directories have correct permissions
-            sudo chmod 755 /var/www/html/backoffice
-
-      - name: Reload web server
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: ${{ secrets.EC2_PORT || 22 }}
-          timeout: 30s
-          command_timeout: 2m
-          script: |
-            # Reload nginx if it's running (no configuration changes, just refresh)
-            if systemctl is-active --quiet nginx; then
-              sudo systemctl reload nginx
-              echo "✅ Web server reloaded"
+            if [ -d "repo" ]; then
+              echo "📁 Updating existing repository..."
+              cd repo
+              git fetch origin
+              git reset --hard origin/$BRANCH
+              git clean -fd
+              cd ..
             else
-              echo "⚠️ Web server is not running"
+              echo "📁 Cloning repository..."
+              git clone -b $BRANCH "$REPO_URL" repo
             fi
 
-      - name: Health Check
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: ${{ secrets.EC2_PORT || 22 }}
-          timeout: 30s
-          command_timeout: 2m
-          script: |
-            # Wait a moment for nginx to reload
-            sleep 5
+            cd repo
 
-            # Test backoffice deployment
-            echo "🔍 Testing backoffice deployment..."
+            # Check Node.js and npm
+            echo "🔍 Checking Node.js environment..."
+            node --version
+            npm --version
 
-            # Check if files are in place
-            if [ -f "/var/www/html/backoffice/dist/index.html" ]; then
-              echo "✅ Backoffice files deployed successfully"
-              ls -la /var/www/html/backoffice/dist/ | head -5
-            else
-              echo "❌ Backoffice files not found at expected location"
+            # Install dependencies
+            echo "📦 Installing dependencies..."
+            npm ci
+
+            # Create environment file
+            echo "🔧 Creating environment file..."
+            cat > .env << 'ENVEOF'
+            VITE_BASE_PATH=${{ vars.VITE_BASE_PATH || '' }}
+            VITE_API_DOMAIN=${{ vars.VITE_API_DOMAIN || 'https://api.qualiflex.com.br' }}
+            VITE_GOOGLE_MAPS_API_KEY=${{ vars.VITE_GOOGLE_MAPS_API_KEY || '' }}
+            ENVEOF
+
+            # Build application
+            echo "🔨 Building application..."
+            npm run build
+
+            # Verify build output
+            if [ ! -d "dist" ] || [ ! -f "dist/index.html" ]; then
+              echo "❌ Build failed - dist directory or index.html not found"
               exit 1
             fi
 
-            # Test custom domain (if configured)
-            if curl -f http://backoffice.qualiflex.com.br/ >/dev/null 2>&1; then
-              echo "✅ Backoffice is accessible at custom domain"
+            echo "✅ Build completed successfully"
+            ls -la dist/
+
+            # Deploy to nginx web directory
+            echo "🚀 Deploying to web server..."
+
+            # Clear current web directory
+            sudo rm -rf /var/www/html/backoffice/build/*
+
+            # Copy built files to the correct nginx location
+            sudo cp -r dist/* /var/www/html/backoffice/build/
+
+            # Set proper permissions for nginx
+            echo "🔒 Setting permissions..."
+            sudo chown -R www-data:www-data /var/www/html/backoffice
+            sudo find /var/www/html/backoffice -type f -exec chmod 644 {} \;
+            sudo find /var/www/html/backoffice -type d -exec chmod 755 {} \;
+
+            # Ensure parent directories have correct permissions
+            sudo chmod 755 /var/www/html
+            sudo chmod 755 /var/www/html/backoffice
+
+            # Test nginx configuration
+            echo "🧪 Testing nginx configuration..."
+            if sudo nginx -t; then
+              echo "✅ Nginx configuration is valid"
+              
+              # Reload nginx
+              sudo systemctl reload nginx
+              echo "🔄 Nginx reloaded successfully"
             else
-              echo "ℹ️ Custom domain not accessible (this is normal if not configured yet)"
+              echo "❌ Nginx configuration test failed"
+              exit 1
             fi
+
+            # Wait for nginx to reload
+            sleep 3
+
+            # Health check
+            echo "🏥 Performing health check..."
+
+            # Check if index.html exists and is readable
+            if [ -f "/var/www/html/backoffice/build/index.html" ]; then
+              echo "✅ Index.html found at correct location"
+              ls -la /var/www/html/backoffice/build/index.html
+            else
+              echo "❌ Index.html not found at /var/www/html/backoffice/build/"
+              exit 1
+            fi
+
+            # Test local access
+            if curl -f http://localhost/backoffice/ >/dev/null 2>&1; then
+              echo "✅ Backoffice accessible via nginx proxy"
+            else
+              echo "⚠️ Backoffice not accessible via nginx proxy (this may be normal if custom domain is configured)"
+            fi
+
+            # Test custom domain (if DNS is configured)
+            if curl -f http://backoffice.qualiflex.com.br/ >/dev/null 2>&1; then
+              echo "✅ Backoffice accessible at custom domain"
+            else
+              echo "⚠️ Custom domain not accessible yet"
+              echo "   This is normal if DNS is not configured or SSL is required"
+              echo "   Try: curl -f -H 'Host: backoffice.qualiflex.com.br' http://localhost/"
+              
+              # Test with host header
+              if curl -f -H "Host: backoffice.qualiflex.com.br" http://localhost/ >/dev/null 2>&1; then
+                echo "✅ Custom domain works with host header - DNS issue"
+              else
+                echo "⚠️ Custom domain configuration may need checking"
+              fi
+            fi
+
+            # Cleanup staging directory
+            cd /home/ubuntu
+            rm -rf $STAGING_DIR
+
+            echo ""
+            echo "🎉 Backoffice deployment completed successfully!"
+            echo ""
+            echo "📋 Deployment Summary:"
+            echo "✅ Files deployed to: /var/www/html/backoffice/build/"
+            echo "✅ Permissions set for nginx"
+            echo "✅ Nginx configuration tested and reloaded"
+            echo ""
+            echo "🌐 Access your backoffice at:"
+            echo "   - Custom domain: http://backoffice.qualiflex.com.br/"
+            echo "   - With SSL: https://backoffice.qualiflex.com.br/ (after SSL setup)"
+            echo ""
+            echo "📝 Next steps:"
+            echo "1. Verify DNS points to your server IP"
+            echo "2. Run nginx SSL setup if needed"
+            echo "3. Test the application functionality"
 
       - name: Rollback on failure
         if: failure()
@@ -201,27 +257,23 @@ jobs:
           timeout: 30s
           command_timeout: 5m
           script: |
-            echo "🔄 Rolling back to previous deployment..."
+            echo "🔄 Deployment failed, attempting rollback..."
 
             # Restore web files if backup exists
-            if [ -d "/var/www/html/backoffice/dist.backup" ]; then
-              sudo rm -rf /var/www/html/backoffice/dist
-              sudo mv /var/www/html/backoffice/dist.backup /var/www/html/backoffice/dist
-              echo "✅ Web files rollback completed"
+            if [ -d "/var/www/html/backoffice/build.backup" ]; then
+              sudo rm -rf /var/www/html/backoffice/build
+              sudo mv /var/www/html/backoffice/build.backup /var/www/html/backoffice/build
+              sudo systemctl reload nginx
+              echo "✅ Rollback completed"
             else
-              echo "⚠️ No web files backup found"
+              echo "❌ No backup found for rollback"
             fi
 
-            # Restore staging files if backup exists
-            cd /home/${{ secrets.EC2_USERNAME }}/apps/qualiflex-backoffice
-            if [ -d "backup" ]; then
-              rm -rf current
-              mv backup current
-              echo "✅ Staging files rollback completed"
-            else
-              echo "⚠️ No staging backup found"
-            fi
-
-            # Reload web server
-            sudo systemctl reload nginx || true
-            echo "✅ Rollback process completed"
+      - name: Notify Deployment Status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ Qualiflex Backoffice deployment completed successfully"
+          else
+            echo "❌ Qualiflex Backoffice deployment failed"
+          fi
