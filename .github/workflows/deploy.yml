@@ -25,16 +25,16 @@ jobs:
       - name: Create environment file
         run: |
           echo "🔍 Creating .env file with variables:"
-          
+
           cat > .env << EOF
           VITE_BASE_PATH=${{ vars.VITE_BASE_PATH }}
           VITE_API_DOMAIN=${{ vars.VITE_API_DOMAIN }}
           VITE_GOOGLE_MAPS_API_KEY=${{ vars.VITE_GOOGLE_MAPS_API_KEY }}
           EOF
-          
+
           echo "📄 .env file contents:"
           cat .env
-          
+
           echo "⚠️  Note: VITE_API_DOMAIN should NOT include '/api' - the app will add it automatically"
 
       - name: Build application
@@ -43,19 +43,19 @@ jobs:
           echo "Environment variables visible to build:"
           echo "VITE_BASE_PATH: '$VITE_BASE_PATH'"
           echo "VITE_API_DOMAIN: '$VITE_API_DOMAIN'"
-          
+
           # Load .env into current shell environment
           export $(grep -v '^#' .env | xargs)
-          
+
           echo "After loading .env:"
           echo "VITE_BASE_PATH: '$VITE_BASE_PATH'"
           echo "VITE_API_DOMAIN: '$VITE_API_DOMAIN'"
-          
+
           npm run build
-          
+
           echo "📦 Build completed. Checking build output:"
           ls -la dist/
-          
+
           echo "🔍 Checking index.html for base path:"
           if [ -f "dist/index.html" ]; then
             grep -n "href\|src" dist/index.html | head -5
@@ -63,8 +63,10 @@ jobs:
 
       - name: Create deployment package
         run: |
-          # Create deployment package with built dist and config files
-          tar -czf deployment.tar.gz dist/ nginx-config/ scripts/
+          # Create deployment package with only built files
+          tar -czf deployment.tar.gz dist/
+
+          echo "📦 Created deployment package with dist/ folder"
 
       - name: Setup deployment directory
         uses: appleboy/ssh-action@v1.0.3
@@ -76,7 +78,11 @@ jobs:
           timeout: 30s
           command_timeout: 5m
           script: |
-            # Create backoffice directory structure
+            # Create nginx web directory structure
+            sudo mkdir -p /var/www/html/backoffice
+            sudo chown -R ${{ secrets.EC2_USERNAME }}:www-data /var/www/html/backoffice
+
+            # Create temp staging directory
             sudo mkdir -p /home/${{ secrets.EC2_USERNAME }}/apps/qualiflex-backoffice
             sudo chown -R ${{ secrets.EC2_USERNAME }}:${{ secrets.EC2_USERNAME }} /home/${{ secrets.EC2_USERNAME }}/apps/qualiflex-backoffice
 
@@ -101,7 +107,7 @@ jobs:
           source: "deployment.tar.gz"
           target: "/home/${{ secrets.EC2_USERNAME }}/apps/qualiflex-backoffice/current"
 
-      - name: Extract and setup
+      - name: Extract and deploy files
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -117,24 +123,24 @@ jobs:
             tar -xzf deployment.tar.gz
             rm deployment.tar.gz
 
-            # Set proper permissions for files and directories
-            find dist/ -type f -exec chmod 644 {} \;
-            find dist/ -type d -exec chmod 755 {} \;
-
-            # Fix permissions for nginx access (crucial for avoiding 403 errors)
-            sudo chmod 755 /home/${{ secrets.EC2_USERNAME }}
-            sudo chmod 755 /home/${{ secrets.EC2_USERNAME }}/apps
-            sudo chmod 755 /home/${{ secrets.EC2_USERNAME }}/apps/qualiflex-backoffice
-            sudo chmod 755 /home/${{ secrets.EC2_USERNAME }}/apps/qualiflex-backoffice/current
-            sudo chmod 755 /home/${{ secrets.EC2_USERNAME }}/apps/qualiflex-backoffice/current/dist
-
-            # Setup integrated nginx configuration if script exists
-            if [ -f "scripts/setup-integrated-nginx.sh" ]; then
-              chmod +x scripts/setup-integrated-nginx.sh
-              ./scripts/setup-integrated-nginx.sh
+            # Backup current web files if they exist
+            if [ -d "/var/www/html/backoffice/dist" ]; then
+              sudo rm -rf /var/www/html/backoffice/dist.backup
+              sudo mv /var/www/html/backoffice/dist /var/www/html/backoffice/dist.backup
             fi
 
-      - name: Update nginx configuration
+            # Copy built files to web directory
+            sudo cp -r dist/ /var/www/html/backoffice/
+
+            # Set proper permissions for web server access
+            sudo chown -R www-data:www-data /var/www/html/backoffice/dist
+            sudo find /var/www/html/backoffice/dist -type f -exec chmod 644 {} \;
+            sudo find /var/www/html/backoffice/dist -type d -exec chmod 755 {} \;
+
+            # Ensure parent directories have correct permissions
+            sudo chmod 755 /var/www/html/backoffice
+
+      - name: Reload web server
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -144,12 +150,12 @@ jobs:
           timeout: 30s
           command_timeout: 2m
           script: |
-            # Reload nginx if it's running
+            # Reload nginx if it's running (no configuration changes, just refresh)
             if systemctl is-active --quiet nginx; then
               sudo systemctl reload nginx
-              echo "✅ Nginx configuration reloaded"
+              echo "✅ Web server reloaded"
             else
-              echo "⚠️ Nginx is not running"
+              echo "⚠️ Web server is not running"
             fi
 
       - name: Health Check
@@ -165,21 +171,23 @@ jobs:
             # Wait a moment for nginx to reload
             sleep 5
 
-            # Test backoffice endpoints
-            echo "🔍 Testing backoffice endpoints..."
+            # Test backoffice deployment
+            echo "🔍 Testing backoffice deployment..."
 
-            # Test direct file access
-            if curl -f http://localhost/backoffice/ >/dev/null 2>&1; then
-              echo "✅ Backoffice is accessible at /backoffice/"
+            # Check if files are in place
+            if [ -f "/var/www/html/backoffice/dist/index.html" ]; then
+              echo "✅ Backoffice files deployed successfully"
+              ls -la /var/www/html/backoffice/dist/ | head -5
             else
-              echo "⚠️ Backoffice not responding at /backoffice/ (this may be normal if nginx config needs manual setup)"
+              echo "❌ Backoffice files not found at expected location"
+              exit 1
             fi
 
-            # Test custom domain (after DNS setup)
+            # Test custom domain (if configured)
             if curl -f http://backoffice.qualiflex.com.br/ >/dev/null 2>&1; then
               echo "✅ Backoffice is accessible at custom domain"
             else
-              echo "⚠️ Custom domain not configured yet (expected until DNS is set up)"
+              echo "ℹ️ Custom domain not accessible (this is normal if not configured yet)"
             fi
 
       - name: Rollback on failure
@@ -193,14 +201,27 @@ jobs:
           timeout: 30s
           command_timeout: 5m
           script: |
-            cd /home/${{ secrets.EC2_USERNAME }}/apps/qualiflex-backoffice
+            echo "🔄 Rolling back to previous deployment..."
 
+            # Restore web files if backup exists
+            if [ -d "/var/www/html/backoffice/dist.backup" ]; then
+              sudo rm -rf /var/www/html/backoffice/dist
+              sudo mv /var/www/html/backoffice/dist.backup /var/www/html/backoffice/dist
+              echo "✅ Web files rollback completed"
+            else
+              echo "⚠️ No web files backup found"
+            fi
+
+            # Restore staging files if backup exists
+            cd /home/${{ secrets.EC2_USERNAME }}/apps/qualiflex-backoffice
             if [ -d "backup" ]; then
-              echo "🔄 Rolling back to previous deployment..."
               rm -rf current
               mv backup current
-              sudo systemctl reload nginx || true
-              echo "✅ Rollback completed"
+              echo "✅ Staging files rollback completed"
             else
-              echo "❌ No backup found for rollback"
+              echo "⚠️ No staging backup found"
             fi
+
+            # Reload web server
+            sudo systemctl reload nginx || true
+            echo "✅ Rollback process completed"

@@ -1,176 +1,366 @@
-# Qualiflex Backoffice
+# Qualiflex Server Configuration
 
-## Development
+This repository contains nginx configurations and deployment scripts for the complete Qualiflex application stack.
 
-### Setup Environment Variables
+## 🏗️ Architecture Overview
 
-Create a `.env.local` file for local development:
+The Qualiflex platform consists of three applications:
 
-```env
-VITE_API_DOMAIN=http://localhost:3100
-VITE_BASE_PATH=/
+1. **Main Website** (`qualiflex.com.br`) - WordPress CMS
+2. **Backoffice** (`backoffice.qualiflex.com.br`) - React application 
+3. **API** (`api.qualiflex.com.br`) - Node.js REST API
+
+All applications are served through nginx as a reverse proxy with SSL/HTTPS support.
+
+## 📁 Project Structure
+
+```
+qualiflex-server/
+├── nginx-config/
+│   ├── qualiflex-main.conf      # WordPress configuration
+│   ├── qualiflex-backoffice.conf # React app configuration
+│   └── qualiflex-api.conf       # Node.js API configuration
+├── scripts/
+│   └── setup-nginx.sh           # Automated setup script
+├── .github/workflows/
+│   └── deploy-nginx.yml         # GitHub Actions deployment
+├── docs/
+│   └── README.md               # This documentation
+└── README.md                   # Project overview
 ```
 
-### Start Development Server
+## 🚀 Quick Start
+
+### Option 1: Automated Deployment (GitHub Actions)
+
+1. **Fork this repository** to your GitHub account
+
+2. **Configure repository secrets** in your GitHub repo settings:
+   ```
+   EC2_HOST=your-ec2-ip-address
+   EC2_USERNAME=ubuntu
+   EC2_SSH_KEY=your-private-ssh-key
+   EC2_PORT=22
+   GITHUB_TOKEN=your-github-token
+   ```
+
+3. **Run the deployment workflow**:
+   - Go to Actions tab in your GitHub repository
+   - Select "Deploy Nginx Configurations"
+   - Click "Run workflow"
+   - Choose options:
+     - Target environment: production
+     - Force reload: false
+     - Install SSL: true (if domains are configured)
+
+### Option 2: Manual Setup
+
+1. **SSH into your server**:
+   ```bash
+   ssh ubuntu@your-ec2-server
+   ```
+
+2. **Download and run the setup script**:
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/your-username/qualiflex-server/main/scripts/setup-nginx.sh -o setup-nginx.sh
+   chmod +x setup-nginx.sh
+   ./setup-nginx.sh --ssl
+   ```
+
+### Option 3: Manual Configuration
+
+1. **Clone this repository on your server**:
+   ```bash
+   git clone https://github.com/your-username/qualiflex-server.git
+   cd qualiflex-server
+   ```
+
+2. **Copy nginx configurations**:
+   ```bash
+   sudo cp nginx-config/*.conf /etc/nginx/sites-available/
+   sudo ln -sf /etc/nginx/sites-available/qualiflex-* /etc/nginx/sites-enabled/
+   sudo rm -f /etc/nginx/sites-enabled/default
+   ```
+
+3. **Test and reload nginx**:
+   ```bash
+   sudo nginx -t
+   sudo systemctl reload nginx
+   ```
+
+## 🔧 Configuration Details
+
+### Domain Mapping
+
+| Domain | Application | Port | Directory |
+|--------|-------------|------|-----------|
+| `qualiflex.com.br` | WordPress | 80/443 | `/var/www/html/qualiflex` |
+| `www.qualiflex.com.br` | Redirect to main | - | - |
+| `backoffice.qualiflex.com.br` | React App | 80/443 | `/var/www/html/backoffice/build` |
+| `api.qualiflex.com.br` | Node.js API | 3100 | Proxied to localhost:3100 |
+| `ec2-*.amazonaws.com/api` | Node.js API | 3100 | Proxied to localhost:3100 |
+
+### Security Features
+
+- 🛡️ Security headers (XSS protection, CSRF, etc.)
+- 🗜️ Gzip compression for better performance
+- 🚫 Protection against common exploits
+- 📝 Comprehensive logging
+- ⚡ Optimized caching for static assets
+
+### SSL/HTTPS Support
+
+- 🔒 Let's Encrypt SSL certificates
+- 🔄 Automatic certificate renewal
+- 🔗 HTTP to HTTPS redirects
+- 📱 Modern TLS protocols only
+
+## 📋 Prerequisites
+
+### Server Requirements
+
+- Ubuntu 18.04+ (recommended: Ubuntu 20.04 or 22.04)
+- At least 1GB RAM
+- 10GB+ available disk space
+- Root or sudo access
+
+### Software Dependencies
+
+The setup script will automatically install:
+
+- **nginx** - Web server and reverse proxy
+- **PHP 8.1-FPM** - For WordPress support
+- **certbot** - For SSL certificate management
+- **curl** - For downloading configurations
+
+### DNS Configuration
+
+Before running with SSL, ensure your domains point to your server:
 
 ```bash
-npm install
-npm run dev
+# Check DNS resolution
+nslookup qualiflex.com.br
+nslookup api.qualiflex.com.br
+nslookup backoffice.qualiflex.com.br
 ```
 
-## Building for Different Environments
+## 🔐 SSL Certificate Setup
 
-### For EC2 Sub-path Deployment (`/backoffice`)
+### Automatic SSL Installation
+
+Run the deployment with SSL option:
 
 ```bash
-VITE_BASE_PATH="/backoffice/" VITE_API_DOMAIN="http://ec2-54-207-116-215.sa-east-1.compute.amazonaws.com" npm run build
+# Via GitHub Actions
+Set "Install SSL" to true when running the workflow
+
+# Via setup script
+./setup-nginx.sh --ssl
+
+# Manual certbot
+sudo certbot --nginx -d qualiflex.com.br -d www.qualiflex.com.br -d api.qualiflex.com.br -d backoffice.qualiflex.com.br
 ```
 
-This is used for: `http://ec2-54-207-116-215.sa-east-1.compute.amazonaws.com/backoffice`
+### SSL Certificate Renewal
 
-- **Vite**: Sets `base: "/backoffice/"` for asset paths
-- **React Router**: Sets `basename: "/backoffice"` for client-side routing
-- **API Client**: Points to `http://ec2-54-207-116-215.sa-east-1.compute.amazonaws.com` for API calls
-
-### For Custom Domain Deployment (`/`)
+Certificates automatically renew via cron. Test renewal:
 
 ```bash
-VITE_BASE_PATH="/" VITE_API_DOMAIN="http://api.qualiflex.com.br" npm run build
+sudo certbot renew --dry-run
 ```
 
-This would be used for: `http://backoffice.qualiflex.com.br` (root path)
+## 📁 Application Deployment
 
-- **Vite**: Sets `base: "/"` for asset paths
-- **React Router**: Sets `basename: ""` for client-side routing
-- **API Client**: Points to `http://api.qualiflex.com.br` for API calls
+### WordPress (Main Website)
 
-## Deployment
+1. **Upload WordPress files**:
+   ```bash
+   # Extract WordPress to the correct directory
+   sudo wget https://wordpress.org/latest.tar.gz
+   sudo tar xzf latest.tar.gz
+   sudo cp -R wordpress/* /var/www/html/qualiflex/
+   sudo chown -R www-data:www-data /var/www/html/qualiflex
+   sudo chmod -R 755 /var/www/html/qualiflex
+   ```
 
-### GitHub Actions Variables
+2. **Database setup**:
+   ```bash
+   # Install MySQL
+   sudo apt install mysql-server
+   
+   # Create WordPress database
+   sudo mysql -e "CREATE DATABASE qualiflex_wp;"
+   sudo mysql -e "CREATE USER 'wp_user'@'localhost' IDENTIFIED BY 'secure_password';"
+   sudo mysql -e "GRANT ALL PRIVILEGES ON qualiflex_wp.* TO 'wp_user'@'localhost';"
+   ```
 
-Configure these variables in your repository settings under `Settings > Secrets and variables > Actions > Variables`:
+3. **Configure WordPress**:
+   - Visit `http://qualiflex.com.br/wp-admin/install.php`
+   - Follow the WordPress installation wizard
 
-| Variable          | Description                  | Example Value                                               |
-| ----------------- | ---------------------------- | ----------------------------------------------------------- |
-| `VITE_BASE_PATH`  | Base path for asset loading  | `/backoffice/`                                              |
-| `VITE_API_DOMAIN` | API domain for backend calls | `http://ec2-54-207-116-215.sa-east-1.compute.amazonaws.com` |
+### React Backoffice
 
-### Setting Up GitHub Actions Variables
+1. **Build your React application**:
+   ```bash
+   # On your development machine
+   npm run build
+   ```
 
-1. Go to your repository on GitHub
-2. Navigate to `Settings > Secrets and variables > Actions`
-3. Click on the `Variables` tab
-4. Click `New repository variable`
-5. Add the following variables:
+2. **Upload build files**:
+   ```bash
+   # Copy build files to server
+   scp -r build/* ubuntu@your-server:/var/www/html/backoffice/build/
+   
+   # Or upload via SFTP, rsync, etc.
+   ```
 
-**For EC2 Sub-path Deployment:**
+3. **Set correct permissions**:
+   ```bash
+   sudo chown -R www-data:www-data /var/www/html/backoffice
+   sudo chmod -R 755 /var/www/html/backoffice
+   ```
 
+### Node.js API
+
+1. **Deploy your API application**:
+   ```bash
+   # Example using PM2
+   cd /home/ubuntu/apps/qualiflex-api
+   npm install
+   npm run build  # if using TypeScript
+   pm2 start ecosystem.config.js
+   pm2 save
+   pm2 startup
+   ```
+
+2. **Ensure API runs on port 3100**:
+   ```javascript
+   // In your API application
+   const PORT = process.env.PORT || 3100;
+   app.listen(PORT, () => {
+     console.log(`API running on port ${PORT}`);
+   });
+   ```
+
+## 🔍 Monitoring and Troubleshooting
+
+### Check Service Status
+
+```bash
+# Nginx status
+sudo systemctl status nginx
+
+# PHP-FPM status
+sudo systemctl status php8.1-fpm
+
+# Check if API is running
+curl http://localhost:3100/health
+
+# Test nginx configuration
+sudo nginx -t
 ```
-VITE_BASE_PATH = /backoffice/
-VITE_API_DOMAIN = http://ec2-54-207-116-215.sa-east-1.compute.amazonaws.com
+
+### View Logs
+
+```bash
+# Nginx access logs
+sudo tail -f /var/log/nginx/qualiflex-*-access.log
+
+# Nginx error logs
+sudo tail -f /var/log/nginx/qualiflex-*-error.log
+
+# PHP-FPM logs
+sudo tail -f /var/log/php8.1-fpm.log
+
+# System logs
+sudo journalctl -u nginx -f
 ```
 
-⚠️ **Important**: `VITE_API_DOMAIN` should be the base domain **without** `/api`. The application automatically appends `/api` for nginx routing.
+### Common Issues
 
-**API URL Construction:**
+#### 502 Bad Gateway
+```bash
+# Check if your applications are running
+sudo systemctl status nginx
+sudo systemctl status php8.1-fpm
+curl http://localhost:3100/  # Check API
 
-- **VITE_API_DOMAIN**: `http://ec2-54-207-116-215.sa-east-1.compute.amazonaws.com`
-- **Actual API calls**: `http://ec2-54-207-116-215.sa-east-1.compute.amazonaws.com/api/auth/sign-in`
-- **WebSocket**: `http://ec2-54-207-116-215.sa-east-1.compute.amazonaws.com/api/backoffice-updates`
-
-**For Custom Domain Deployment:**
-
+# Restart services
+sudo systemctl restart nginx
+sudo systemctl restart php8.1-fpm
 ```
-VITE_BASE_PATH = /
-VITE_API_DOMAIN = http://api.qualiflex.com.br
+
+#### SSL Certificate Issues
+```bash
+# Check certificate status
+sudo certbot certificates
+
+# Renew certificates
+sudo certbot renew
+
+# Test SSL configuration
+openssl s_client -connect qualiflex.com.br:443
 ```
 
-The GitHub Actions workflow automatically creates a `.env` file from these variables during deployment.
+#### Permission Issues
+```bash
+# Fix file permissions
+sudo chown -R www-data:www-data /var/www/html/
+sudo chmod -R 755 /var/www/html/
+```
 
-**Default Values:** If variables are not set, the workflow uses these defaults:
+## 🔄 Updates and Maintenance
 
-- `VITE_BASE_PATH`: `/backoffice/`
-- `VITE_API_DOMAIN`: `http://ec2-54-207-116-215.sa-east-1.compute.amazonaws.com`
+### Updating Nginx Configurations
 
-### Verifying Variables Are Set
+1. **Via GitHub Actions**: Push changes to the repository and the workflow will automatically deploy
 
-You can verify your variables are configured correctly by:
+2. **Via Script**: Re-run the setup script:
+   ```bash
+   ./setup-nginx.sh --force
+   ```
 
-1. **Check Repository Variables**: Go to `Settings > Secrets and variables > Actions > Variables`
-2. **Check GitHub Actions Logs**: Look for the "Create environment file" step output
-3. **Variable Names**: Ensure variable names are **exactly** as shown (case-sensitive)
+3. **Manual Update**:
+   ```bash
+   sudo cp nginx-config/qualiflex-main.conf /etc/nginx/sites-available/qualiflex-main
+   sudo nginx -t
+   sudo systemctl reload nginx
+   ```
 
-**Common Issues:**
+### Backup Strategy
 
-- ❌ Variable name typos (e.g., `VITE_BASE_PATH` vs `VITE_BASEPATH`)
-- ❌ Variables set as Secrets instead of Variables
-- ❌ Variables set in different repository
-- ❌ Incorrect variable values (missing trailing slash, wrong protocol)
+```bash
+# Backup nginx configurations
+sudo cp -r /etc/nginx/sites-available /backup/nginx-$(date +%Y%m%d)
 
-## Troubleshooting
+# Backup application files
+sudo tar czf /backup/qualiflex-apps-$(date +%Y%m%d).tar.gz /var/www/html/
 
-### Asset Loading Issues (404s, MIME type errors)
+# Backup database (WordPress)
+mysqldump -u wp_user -p qualiflex_wp > /backup/wordpress-$(date +%Y%m%d).sql
+```
 
-If you see errors like:
+## 🤝 Contributing
 
-- `Failed to load resource: 404 (Not Found)` for CSS/JS files
-- `MIME type ('text/html') is not a supported stylesheet MIME type`
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
-This indicates the base path is incorrectly configured. **Debug steps:**
+## 📄 License
 
-1. **Check GitHub Actions Logs**:
+This project is licensed under the MIT License. See LICENSE file for details.
 
-   - Look for "Create environment file" step
-   - Verify VITE_BASE_PATH value is displayed correctly
-   - Check "Build application" step shows correct asset paths in index.html
+## 🆘 Support
 
-2. **Verify GitHub Variables**:
+For issues and questions:
 
-   - Ensure `VITE_BASE_PATH` is set to `/backoffice/` (with trailing slash)
-   - Variable must be in **Variables** tab, not Secrets
-   - Check variable name is exactly `VITE_BASE_PATH` (case-sensitive)
+1. Check the troubleshooting section above
+2. Review nginx and application logs
+3. Create an issue in this repository
+4. Contact the development team
 
-3. **Check Built Assets**:
+---
 
-   - Assets should be referenced as `/backoffice/assets/...` in index.html
-   - If showing `/assets/...` the base path wasn't applied
-
-4. **Nginx Configuration**:
-   - Verify nginx serves files from correct location
-   - Check permissions are set correctly
-
-### React Router Issues (404s on page refresh, wrong URLs)
-
-If you see:
-
-- 404 errors when refreshing pages
-- Routes not working correctly
-- Links going to wrong URLs
-
-This indicates React Router's basename is not properly configured:
-
-1. Ensure `VITE_BASE_PATH` is set correctly during build
-2. Check that React Router's `basename` matches your deployment path
-3. For `/backoffice` deployment: basename should be `/backoffice` (no trailing slash)
-4. For root deployment: basename should be `""` (empty string)
-
-### API Connection Issues (calls to localhost:3100 or wrong domain)
-
-If you see API requests going to:
-
-- `http://127.0.0.1:3100` or `http://localhost:3100` in production
-- Wrong API domain
-
-This indicates `VITE_API_DOMAIN` is not properly configured:
-
-1. **Check GitHub Actions Variables**: Ensure `VITE_API_DOMAIN` is set in repository variables
-2. **Verify Build Process**: Check the workflow creates the `.env` file correctly
-3. **Check Build Logs**: Look for "🔗 API Client baseURL" and "🔌 WebSocket connecting to" messages
-4. **For EC2 deployment**: `VITE_API_DOMAIN="http://ec2-54-207-116-215.sa-east-1.compute.amazonaws.com"`
-5. **For custom domain**: `VITE_API_DOMAIN="http://api.qualiflex.com.br"`
-6. **For local development**: Create `.env.local` with `VITE_API_DOMAIN="http://localhost:3100"`
-
-**Expected API URLs (auto-generated):**
-
-- Auth: `{VITE_API_DOMAIN}/api/auth/sign-in`
-- WebSocket: `{VITE_API_DOMAIN}/api/backoffice-updates`
+**Note**: Remember to replace placeholder values (like repository URLs, IP addresses, and email addresses) with your actual values before deployment.
