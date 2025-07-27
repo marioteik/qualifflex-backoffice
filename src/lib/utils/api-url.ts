@@ -5,5 +5,5 @@
  */
 export const getApiUrl = (path: string): string => {
   const apiDomain = import.meta.env.VITE_API_DOMAIN || "";
-  return `${apiDomain}${path}`;
+  return `${apiDomain}/api/${path}`;
 };
