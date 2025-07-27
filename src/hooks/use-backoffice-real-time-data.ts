@@ -7,20 +7,23 @@ import type { QueryKey } from "@tanstack/react-query";
 export function useBackofficeRealTimeData(
   entity: "chat" | "shipment" | "rooms" | "route" | "driver",
   queryKey: QueryKey,
-  handleUpdate?: (data: unknown) => void,
+  handleUpdate?: (data: unknown) => void
 ) {
   const session = useGlobalStore((state) => state.session);
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    const updates = io(
-      import.meta.env.VITE_API_DOMAIN + "/backoffice-updates",
-      {
-        auth: {
-          token: session?.access_token,
-        },
+    // Ensure API domain includes /api path for nginx routing
+    const apiDomain = import.meta.env.VITE_API_DOMAIN || "";
+    const baseUrl = apiDomain.endsWith("/api") ? apiDomain : `${apiDomain}/api`;
+
+    console.log(`🔌 WebSocket connecting to: ${baseUrl}/backoffice-updates`);
+
+    const updates = io(baseUrl + "/backoffice-updates", {
+      auth: {
+        token: session?.access_token,
       },
-    );
+    });
 
     updates.on("connect", () => {
       console.log("Connected to " + entity + " updates");
@@ -43,7 +46,7 @@ export function useBackofficeRealTimeData(
         if (!oldData) return [data];
 
         return oldData.map((item: unknown) =>
-          item.id === data.id ? data : item,
+          item.id === data.id ? data : item
         );
       });
     });

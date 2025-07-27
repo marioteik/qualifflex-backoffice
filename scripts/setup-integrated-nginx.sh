@@ -133,11 +133,23 @@ server {
         location ~* \.html$ {
             expires -1;
             add_header Cache-Control "no-cache, no-store, must-revalidate";
-        }
-    }
-    
-    # Health check endpoint for API
-    location /health {
+               }
+   }
+   
+   # Serve backoffice public assets at root level (for assets like /logo.png)
+   location ~* ^/(logo\.png|apolo_login\.png|react\.svg|vite\.svg|favicon\.ico)$ {
+       alias /home/__USERNAME__/apps/qualiflex-backoffice/current/dist/$1;
+       expires 1y;
+       add_header Cache-Control "public, immutable";
+       
+       # CORS headers for assets
+       add_header Access-Control-Allow-Origin "*";
+       add_header Access-Control-Allow-Methods "GET, OPTIONS";
+       add_header Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept";
+   }
+   
+   # Health check endpoint for API
+   location /health {
         proxy_pass http://qualiflex_api/health;
         proxy_http_version 1.1;
         proxy_set_header Host $host;

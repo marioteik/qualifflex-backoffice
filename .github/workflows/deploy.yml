@@ -25,18 +25,17 @@ jobs:
       - name: Create environment file
         run: |
           echo "🔍 Creating .env file with variables:"
-          echo "VITE_BASE_PATH: '${{ vars.VITE_BASE_PATH }}'"
-          echo "VITE_API_DOMAIN: '${{ vars.VITE_API_DOMAIN }}'"
-          echo "VITE_GOOGLE_MAPS_API_KEY: '${{ vars.VITE_GOOGLE_MAPS_API_KEY }}'"
           
           cat > .env << EOF
-          VITE_BASE_PATH=${{ vars.VITE_BASE_PATH || '/backoffice/' }}
-          VITE_API_DOMAIN=${{ vars.VITE_API_DOMAIN || 'http://ec2-54-207-116-215.sa-east-1.compute.amazonaws.com' }}
+          VITE_BASE_PATH=${{ vars.VITE_BASE_PATH }}
+          VITE_API_DOMAIN=${{ vars.VITE_API_DOMAIN }}
           VITE_GOOGLE_MAPS_API_KEY=${{ vars.VITE_GOOGLE_MAPS_API_KEY }}
           EOF
           
           echo "📄 .env file contents:"
           cat .env
+          
+          echo "⚠️  Note: VITE_API_DOMAIN should NOT include '/api' - the app will add it automatically"
 
       - name: Build application
         run: |

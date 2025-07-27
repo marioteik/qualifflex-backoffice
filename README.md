@@ -70,6 +70,8 @@ VITE_BASE_PATH = /backoffice/
 VITE_API_DOMAIN = http://ec2-54-207-116-215.sa-east-1.compute.amazonaws.com
 ```
 
+⚠️ **Important**: `VITE_API_DOMAIN` should be the base domain **without** `/api`. The application automatically appends `/api` for nginx routing.
+
 **For Custom Domain Deployment:**
 
 ```
