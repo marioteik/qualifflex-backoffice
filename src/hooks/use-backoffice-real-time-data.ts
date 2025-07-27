@@ -13,13 +13,13 @@ export function useBackofficeRealTimeData(
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    // Ensure API domain includes /api path for nginx routing
     const apiDomain = import.meta.env.VITE_API_DOMAIN || "";
-    const baseUrl = apiDomain.endsWith("/api") ? apiDomain : `${apiDomain}/api`;
 
-    console.log(`🔌 WebSocket connecting to: ${baseUrl}/backoffice-updates`);
+    console.log(
+      `🔌 WebSocket connecting to: ${apiDomain}/api/backoffice-updates`
+    );
 
-    const updates = io(baseUrl + "/backoffice-updates", {
+    const updates = io(apiDomain + "/api/backoffice-updates", {
       auth: {
         token: session?.access_token,
       },
@@ -57,5 +57,5 @@ export function useBackofficeRealTimeData(
       updates.disconnect();
       socketRef.current = null;
     };
-  }, [entity, session?.access_token]);
+  }, [entity, session?.access_token, queryKey, handleUpdate]);
 }

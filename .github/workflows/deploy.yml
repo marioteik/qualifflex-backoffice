@@ -52,7 +52,7 @@ jobs:
           echo "📄 .env file contents:"
           cat .env
 
-          echo "⚠️  Note: VITE_API_DOMAIN should NOT include '/api' - the app will add it automatically"
+          echo "ℹ️  Note: VITE_API_DOMAIN should include the full API URL without the '/api' path"
 
       - name: Build application
         run: |
@@ -138,7 +138,7 @@ jobs:
             echo "🔧 Creating environment file..."
             cat > .env << 'ENVEOF'
             VITE_BASE_PATH=${{ vars.VITE_BASE_PATH || '' }}
-            VITE_API_DOMAIN=${{ vars.VITE_API_DOMAIN || 'https://api.qualiflex.com.br' }}
+            VITE_API_DOMAIN=${{ vars.VITE_API_DOMAIN }}
             VITE_GOOGLE_MAPS_API_KEY=${{ vars.VITE_GOOGLE_MAPS_API_KEY || '' }}
             ENVEOF
 
