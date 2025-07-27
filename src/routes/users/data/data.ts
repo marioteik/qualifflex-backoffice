@@ -1,5 +1,5 @@
 import {
-  Gem,
+  TowerControl,
   Hourglass,
   Lock,
   Truck,
@@ -12,7 +12,7 @@ export const roles = [
   {
     value: "1",
     label: "Admin",
-    icon: Gem,
+    icon: TowerControl,
   },
   {
     value: "2",

@@ -5,21 +5,14 @@ import {
   CardTitle,
   Card,
 } from "@/components/ui/card";
-import { useBackofficeRealTimeData } from "@/hooks/use-backoffice-real-time-data";
-import queryKeyFactory from "@/lib/utils/query-key";
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useChatStore } from "@/routes/chats/data/store";
 import { ChatsSidebar } from "@/routes/chats/components/chat-sidebar";
 import ShipmentDescription from "@/components/shipment-description";
 import ChatForm from "./components/chat-form";
-import { queryClient } from "@/query-client";
-import { Room } from "@/schemas/room";
-import type { ChatMessage } from "@/schemas/chat";
-import { useGlobalStore } from "@/stores/global-store";
 import { useChatRooms } from "@/api/chat-rooms";
 import { useShipments } from "@/api/shipments";
-import type { SelectShipment } from "@/schemas/shipments";
 
 export default function Chats() {
   const { resetStore } = useChatStore();
@@ -30,49 +23,6 @@ export default function Chats() {
   useShipments();
 
   const { data: rooms } = useChatRooms();
-
-  useBackofficeRealTimeData("chat", queryKeyFactory.chatRooms(), (data) => {
-    const record = data as ChatMessage;
-
-    queryClient.setQueryData(queryKeyFactory.chatRooms(), (oldData: Room[]) => {
-      if (!oldData) return [];
-
-      return oldData.map((item) => {
-        const isNew =
-          useChatStore.getState().room?.shipmentId !== item.shipmentId;
-
-        return item.shipmentId === record.shipmentId
-          ? {
-              ...item,
-              chatMessages: [...item.chatMessages, record],
-              isNew,
-            }
-          : item;
-      });
-    });
-  });
-
-  useBackofficeRealTimeData("rooms", queryKeyFactory.chatRooms(), (data) => {
-    const room = data as Room;
-
-    queryClient.setQueryData(queryKeyFactory.chatRooms(), (oldData: Room[]) => {
-      if (!oldData) return [];
-
-      const _shipments = queryClient.getQueryData(
-        queryKeyFactory.shipments()
-      ) as SelectShipment[];
-
-      return [
-        ...oldData,
-        {
-          ...room,
-          chatMessages: [],
-          shipment: _shipments.find((s) => s.id === room.shipmentId),
-          isNew: true,
-        },
-      ];
-    });
-  });
 
   const handleNext = () => {
     const index = rooms.findIndex((r) => r.id === room?.id);

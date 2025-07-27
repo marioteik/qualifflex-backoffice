@@ -30,9 +30,9 @@ export default function ShipmentImports() {
       <div className="flex flex-col gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Remessas Sincronizadas</CardTitle>
+            <CardTitle>Remessas Importadas</CardTitle>
             <CardDescription>
-              Histórico de sincronizações automáticas de remessas no sistema.
+              Histórico de sincronizações automáticas entre o CIGAM e o FRS.
             </CardDescription>
           </CardHeader>
           <CardContent>

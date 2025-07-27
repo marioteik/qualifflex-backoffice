@@ -13,6 +13,7 @@ export const roomSchema = timestamps.extend({
   name: z.string(),
   shipment: selectShipmentSchema,
   chatMessages: chatMessageSchema.array(),
+  isNew: z.boolean().optional(),
 });
 
 export type InsertRoom = z.infer<typeof insertRoomSchema>;

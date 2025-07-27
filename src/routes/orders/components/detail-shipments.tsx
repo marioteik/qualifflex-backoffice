@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Truck, Package, Calendar, Eye } from "lucide-react";
+import { Truck, Package, Eye } from "lucide-react";
 import {
   formatToBRL,
   formatDate,
@@ -9,6 +9,7 @@ import {
 } from "@/lib/utils/formatters";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import { SelectShipment } from "@/schemas/shipments";
 
 interface OrderDetailShipmentsProps {
   order: any; // Replace with proper order type
@@ -30,7 +31,7 @@ export default function OrderDetailShipments({
             Nenhuma remessa encontrada
           </p>
           <p className="text-sm text-muted-foreground">
-            As remessas aparecerão aqui quando forem criadas para este pedido.
+            As remessas aparecerão aqui quando forem criadas para esta ordem de produção.
           </p>
         </div>
       </Card>
@@ -39,17 +40,17 @@ export default function OrderDetailShipments({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Remessas do Pedido</h3>
+      <div className="flex items-center justify-start gap-4">
+        <h3 className="text-lg font-semibold">Remessas da Ordem de Produção</h3>
         <Badge variant="secondary">
           {shipments.length} {shipments.length === 1 ? "remessa" : "remessas"}
         </Badge>
       </div>
 
       <div className="grid gap-4">
-        {shipments.map((shipment: any) => (
+        {shipments.map((shipment: SelectShipment) => (
           <Card key={shipment.id} className="hover:shadow-md transition-shadow">
-            <CardHeader className="pb-3">
+            <CardHeader className="p-4 pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Truck className="h-4 w-4" />
@@ -90,33 +91,40 @@ export default function OrderDetailShipments({
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4 pt-0">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                 <div>
                   <p className="text-muted-foreground">Data de Criação</p>
                   <p className="font-medium">
-                    {formatDate(shipment.createdAt)}
+                    {shipment.issueDate ? <span className="font-mono font-medium text-xl">
+                          {formatDate(shipment.issueDate)}
+                        </span>
+                      : "Não definida"}
                   </p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Previsão de Entrega</p>
-                  <p className="font-medium">
-                    {shipment.estimatedDelivery
-                      ? formatDate(shipment.estimatedDelivery)
+                  <p className="font-medium text-lg">
+                    {shipment.systemEstimation
+                      ? <span className="font-mono font-medium text-xl">
+                          {formatDate(shipment.systemEstimation)}
+                        </span>
                       : "Não definida"}
                   </p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Produtos</p>
-                  <p className="font-medium">
-                    {shipment.itemsCount}{" "}
-                    {shipment.itemsCount === 1 ? "produto" : "produtos"}
+                  <p className="font-medium text-lg">
+                    <span className="font-mono font-medium text-xl">
+                      {shipment.items?.length}
+                    </span>{" "}
+                    {shipment.items?.length === 1 ? "produto" : "produtos"}
                   </p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Valor</p>
-                  <p className="font-medium">
-                    {formatToBRL(shipment.totalValue)}
+                  <p className="font-mono font-medium text-xl">
+                    {formatToBRL(shipment.totalInvoiceValue ?? 0)}
                   </p>
                 </div>
               </div>
@@ -132,33 +140,25 @@ export default function OrderDetailShipments({
         ))}
       </div>
 
-      <Card className="bg-muted/50">
+      <Card className="bg-card">
         <CardContent className="pt-6">
           <div className="grid grid-cols-3 gap-4 text-center">
-            <div>
-              <p className="text-2xl font-bold text-muted-foreground">
-                {shipments.filter((s: any) => s.status === "Finalizado").length}
-              </p>
-              <p className="text-sm text-muted-foreground">Finalizadas</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-warning">
-                {
-                  shipments.filter((s: any) =>
-                    ["Pendente", "Confirmado", "Produzindo"].includes(s.status)
-                  ).length
-                }
+            <div className="text-left">
+              <p className="text-2xl font-medium text-muted-foreground font-mono">
+                {shipments.filter((s: SelectShipment) => !s.finishedAt).length}
               </p>
               <p className="text-sm text-muted-foreground">Em Andamento</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-primary">
-                {formatToBRL(
-                  shipments.reduce(
-                    (sum: number, s: any) => sum + (s.totalValue || 0),
-                    0
-                  )
-                )}
+              <p className="text-2xl font-medium text-muted-foreground font-mono">{shipments.filter((s: SelectShipment) => s.finishedAt).length}</p>
+              <p className="text-sm text-muted-foreground">Finalizadas</p>
+            </div>
+            <div className="text-right">
+              <p className="text-2xl font-medium text-primary font-mono">
+                {formatToBRL(shipments.reduce(
+                  (sum: number, shipment: SelectShipment) => sum + (shipment.totalInvoiceValue || 0),
+                  0
+                ))}
               </p>
               <p className="text-sm text-muted-foreground">Valor Total</p>
             </div>

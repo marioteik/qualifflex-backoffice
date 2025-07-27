@@ -93,7 +93,9 @@ const initialState: InitialState = {
   },
   sorting: [{ id: "codeReference", desc: false }],
   columnFilters: [],
-  columnVisibility: {},
+  columnVisibility: {
+    materials: false,
+  },
 };
 
 export const useOrdersStore = create<State>()(

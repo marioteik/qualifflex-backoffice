@@ -14,8 +14,6 @@ export const columns: (ColumnDef<ListOrders> & { columnName?: string })[] = [
     ),
     size: 120,
     filterFn: (row, id, value: string) => {
-      console.log(value);
-
       const codeReference = row.original.codeReference
         .toLowerCase()
         .split(" ")

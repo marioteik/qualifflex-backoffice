@@ -14,8 +14,21 @@ const route = "/api/chat-rooms";
 export function useChatRooms() {
   return useQuery({
     queryKey: queryKeyFactory.chatRooms(),
-    queryFn: fetchWithToken<(Room & { isNew: boolean })[]>(route),
+    queryFn: async () => {
+      const rooms = await fetchWithToken<Room[]>(route)();
+
+      const newRoomsState = JSON.parse(
+        localStorage.getItem("chatRoomsNewState") || "{}"
+      );
+
+      return rooms.map((room) => ({
+        ...room,
+        isNew: newRoomsState[room.shipmentId] || false,
+      }));
+    },
     initialData: [],
+    staleTime: 5 * 60 * 1000,
+    placeholderData: (previousData) => previousData,
   });
 }
 

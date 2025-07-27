@@ -115,6 +115,15 @@ const pendingApprovalInitialState = {
   ],
 };
 
+const confirmedInitialState = {
+  columnFilters: [
+    {
+      id: "status",
+      value: "Confirmado",
+    },
+  ],
+};
+
 const finishingInitialState = {
   columnFilters: [
     {
@@ -245,6 +254,12 @@ export const useShipmentsStore = create<State>()(
               _initialState = {
                 ...initialState,
                 ...finishingInitialState,
+              };
+              break;
+            case "confirmed":
+              _initialState = {
+                ...initialState,
+                ...confirmedInitialState,
               };
               break;
             case "collected":

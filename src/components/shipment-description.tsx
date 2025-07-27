@@ -65,32 +65,24 @@ export default function ShipmentDescription({
 
   return (
     <>
-      <CardHeader className="flex flex-row items-start bg-muted/50 shrink">
-        <div className="grid gap-0.5">
-          <CardTitle className="group flex items-center gap-2 text-lg">
-            Remessa N.º {formatToBRNumber(Number(shipment?.number))}
-            <Button
-              size="icon"
-              variant="outline"
-              className="h-6 w-6 opacity-0 transition-opacity group-hover:opacity-100"
-              onClick={() => handleCopy(shipment?.number)}
-            >
-              {isCopied ? (
-                <Check className="text-success" />
-              ) : (
-                <Copy className="h-3 w-3" />
-              )}
-              <span className="sr-only">Copiar o número da remessa</span>
-            </Button>
-          </CardTitle>
-          <CardDescription>
-            Emissão:{" "}
-            {format(shipment?.createdAt, "dd 'de' MMMM 'de' yyyy", {
-              locale: ptBR,
-            })}
-          </CardDescription>
-        </div>
-        <div className="ml-auto flex items-center gap-1">
+      <CardHeader className="flex flex-row items-center bg-muted/50 shrink py-4">
+        <CardTitle className="group flex flex items-start gap-2 text-lg">
+          Remessa N.º {formatToBRNumber(Number(shipment?.number))}
+          <Button
+            size="icon"
+            variant="outline"
+            className="h-6 w-6 opacity-0 transition-opacity group-hover:opacity-100"
+            onClick={() => handleCopy(shipment?.number)}
+          >
+            {isCopied ? (
+              <Check className="text-success" />
+            ) : (
+              <Copy className="h-3 w-3" />
+            )}
+            <span className="sr-only">Copiar o número da remessa</span>
+          </Button>
+        </CardTitle>
+        <div className="ml-auto flex items-center gap-1 !mt-0">
           <Button size="sm" variant="outline" className="h-8 gap-1">
             <Truck className="h-3.5 w-3.5" />
             <span className="lg:sr-only xl:not-sr-only xl:whitespace-nowrap">
@@ -113,14 +105,39 @@ export default function ShipmentDescription({
       <CardContent className="p-6 text-sm flex-1 overflow-y-auto">
         <div className="grid gap-3">
           <div className="font-semibold">Detalhes da Remessa</div>
+          <div className="grid gap-3">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Emissão</span>
+              <span className="font-mono font-medium">
+                {format(shipment?.issueDate ?? new Date(), "dd/MM/yyyy", {
+                  locale: ptBR,
+                })}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Prazo de entrega</span>
+              <span className="font-mono font-medium">
+                {format(
+                  shipment?.systemEstimation ?? new Date(),
+                  "dd/MM/yyyy",
+                  {
+                    locale: ptBR,
+                  }
+                )}
+              </span>
+            </div>
+          </div>
+
+          <Separator />
+          <div className="font-semibold">Itens para Produção</div>
           <ul className="grid gap-3">
-            {shipment.items?.map((item) => (
+            {shipment.ordersToBuy?.items.map((item) => (
               <li className="flex items-center justify-between" key={item.id}>
                 <span className="text-muted-foreground">
                   <span>{item.product?.description}</span>{" "}
                   <span className="text-nowrap">x {item.quantity}</span>
                 </span>
-                <span>
+                <span className="font-mono font-medium">
                   {formatToBRL(
                     Number(item.totalPrice ?? item.product?.totalPrice)
                   )}
@@ -128,30 +145,42 @@ export default function ShipmentDescription({
               </li>
             ))}
           </ul>
-          <Separator className="my-2" />
-          <ul className="grid gap-3">
+          <ul className="grid gap-3 mt-1">
             <li className="flex items-center justify-between">
               <span className="text-muted-foreground">Total dos produtos</span>
-              <span>
-                {formatToBRL(shipment.financialCalc.totalProductValue)}
+              <span className="font-mono font-medium">
+                {formatToBRL(shipment.ordersToBuy?.totalValue)}
               </span>
             </li>
+          </ul>
+
+          <Separator />
+          <div className="font-semibold">Materiais</div>
+          <ul className="grid gap-3">
+            {shipment.items.map((item) => (
+              <li className="flex items-center justify-between" key={item.id}>
+                <span className="text-muted-foreground">
+                  <span>{item.product?.description}</span>{" "}
+                  <span className="text-nowrap">x {item.quantity}</span>
+                </span>
+                <span className="font-mono font-medium">
+                  {formatToBRL(
+                    Number(item.totalPrice ?? item.product?.totalPrice)
+                  )}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <ul className="grid gap-3 mt-1">
             <li className="flex items-center justify-between">
-              <span className="text-muted-foreground">Frete</span>
-              <span>{formatToBRL(0)}</span>
-            </li>
-            <li className="flex items-center justify-between">
-              <span className="text-muted-foreground">Impostos</span>
-              <span>{formatToBRL(0)}</span>
-            </li>
-            <li className="flex items-center justify-between font-semibold">
-              <span className="text-muted-foreground">Total</span>
-              <span>
-                {formatToBRL(shipment.financialCalc.totalInvoiceValue)}
+              <span className="text-muted-foreground">Total dos materiais</span>
+              <span className="font-mono font-medium">
+                {formatToBRL(shipment.totalProductValue)}
               </span>
             </li>
           </ul>
         </div>
+
         <Separator className="my-4" />
         <div className="grid gap-4">
           <div className="grid gap-3">
@@ -218,7 +247,7 @@ export default function ShipmentDescription({
 
             <div className="flex items-center justify-between">
               <dt className="text-muted-foreground">CPF/CNPJ</dt>
-              <dd className="group flex items-center">
+              <dd className="group flex items-center font-mono font-medium">
                 {shipment.recipient.businessInfo.cnpjCpf && (
                   <Button
                     size="icon"
@@ -243,7 +272,7 @@ export default function ShipmentDescription({
 
             <div className="flex items-center justify-between">
               <dt className="text-muted-foreground">Inscrição Estadual</dt>
-              <dd className="group flex items-center">
+              <dd className="group flex items-center font-mono font-medium">
                 {shipment.recipient.businessInfo.stateRegistration && (
                   <Button
                     size="icon"
@@ -312,7 +341,7 @@ export default function ShipmentDescription({
                     <span className="sr-only">Copiar o número de telefone</span>
                   </Button>
                 )}{" "}
-                <a href="tel:">
+                <a href="tel:" className="font-mono font-medium">
                   {formatToBRPhone(
                     shipment.recipient.businessInfo.phoneFax ?? ""
                   ) ?? "-"}

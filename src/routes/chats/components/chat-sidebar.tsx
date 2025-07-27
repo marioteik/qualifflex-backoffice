@@ -21,7 +21,6 @@ import { useChatStore } from "@/routes/chats/data/store";
 import type { Room } from "@/schemas/room";
 import { queryClient } from "@/query-client";
 import queryKeyFactory from "@/lib/utils/query-key";
-import type { SelectShipment } from "@/schemas/shipments";
 
 export function ChatsSidebar() {
   const [isPopoverOpen, setOpenPopover] = useState<boolean>(false);
@@ -45,15 +44,26 @@ export function ChatsSidebar() {
   const handleSetRoom = (item: Room) => {
     setRoom(item);
 
-    queryClient.setQueryData(queryKeyFactory.chatRooms(), (rooms: Room[]) => {
-      return rooms.map((r) => {
-        if (r.id === item.id) {
-          return { ...r, isNew: false };
-        }
+    // Mark the room as read (isNew: false) when it's selected
+    if (item.isNew) {
+      queryClient.setQueryData(
+        queryKeyFactory.chatRooms(),
+        (oldData: Room[]) => {
+          if (!oldData) return [];
 
-        return r;
-      });
-    });
+          return oldData.map((roomItem) =>
+            roomItem.id === item.id ? { ...roomItem, isNew: false } : roomItem
+          );
+        }
+      );
+
+      // Remove from localStorage
+      const newRoomsState = JSON.parse(
+        localStorage.getItem("chatRoomsNewState") || "{}"
+      );
+      delete newRoomsState[item.shipmentId];
+      localStorage.setItem("chatRoomsNewState", JSON.stringify(newRoomsState));
+    }
   };
 
   return (

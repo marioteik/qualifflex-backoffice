@@ -71,13 +71,18 @@ export function DataTableRowActions<TData>({
   const { mutate } = useUpdateShipmentStatus();
 
   const handleOpenDetail = useCallback(() => {
-    const shipmentId = (row.original as any).id;
+    const shipmentId = (row.original as { id: string }).id;
 
     // Set the shipment ID and open modal
     setSelectedShipmentId(shipmentId);
     setIsDetailModalOpen(true);
-    // Update URL to support deep linking
-    navigate(`${location.pathname}/${shipmentId}`, { replace: true });
+
+    // Update URL with search parameter to support deep linking
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set("shipmentId", shipmentId);
+    navigate(`${location.pathname}?${currentUrl.searchParams.toString()}`, {
+      replace: true,
+    });
   }, [
     row.original,
     setSelectedShipmentId,
@@ -306,6 +311,12 @@ export function DataTableRowActions<TData>({
                                 const updatedRow = {
                                   id: (row.original as ShipmentsRow).id,
                                   status: "Confirmado",
+                                  informedEstimation: (
+                                    row.original as ShipmentsRow
+                                  ).informedEstimation,
+                                  systemEstimation: (
+                                    row.original as ShipmentsRow
+                                  ).systemEstimation,
                                 };
 
                                 const result =
@@ -314,7 +325,12 @@ export function DataTableRowActions<TData>({
                                   );
 
                                 if (result.success) {
-                                  mutate(result.data);
+                                  mutate(result.data, {
+                                    onSuccess: () => {
+                                      toast.dismiss(id);
+                                      table.resetRowSelection();
+                                    },
+                                  });
                                 } else {
                                   console.error(
                                     "Validation failed:",

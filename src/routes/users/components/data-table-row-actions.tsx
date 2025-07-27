@@ -17,7 +17,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { EllipsisVertical } from "lucide-react";
 import { type UsersRow, useUsersStore } from "@/routes/users/data/store";
 import { useShallow } from "zustand/react/shallow";
-import { useActivateUser, useAssignRoleToUser } from "@/api/users";
+import { useActivateUser, useAssignRoleToUser, useInviteUserByEmail } from "@/api/users";
 import {
   KeyboardNavigation,
   onKeyboardPress,
@@ -63,6 +63,15 @@ export function DataTableRowActions<TData>({
   const { mutate: activate } = useActivateUser({
     onSuccess: () => {
       toast.success(`Usuário ativado com sucesso!`);
+    },
+  });
+
+  const { mutate: invite } = useInviteUserByEmail({
+    onSuccess: () => {
+      toast.success(`Link de acesso enviado com sucesso!`);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
     },
   });
 
@@ -114,6 +123,10 @@ export function DataTableRowActions<TData>({
     }
   }, [handleDelete, open]);
 
+  const handleInvite = useCallback(() => {
+    invite({ email: (row.original as UsersRow)!.email! });
+  }, [invite, row.original]);
+
   return (
     <>
       <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -157,6 +170,10 @@ export function DataTableRowActions<TData>({
           </DropdownMenuSub>
 
           <DropdownMenuSeparator />
+
+          <DropdownMenuItem onClick={handleInvite}>
+            Enviar link de acesso
+          </DropdownMenuItem>
 
           {!(row.original as UsersRow)?.bannedUntil && (
             <DropdownMenuItem onClick={handleDisable}>

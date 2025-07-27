@@ -25,6 +25,7 @@ import { useRolesStore } from "@/routes/permissions/roles/data/store";
 import { useCreateRole, useUpdateRole } from "@/api/roles";
 import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
+import { useEffect } from "react";
 
 export default function RoleForm({
   opened,
@@ -72,48 +73,52 @@ export default function RoleForm({
     },
   });
 
+  const shouldShowContent = opened;
+
   return (
-    <Dialog open={opened} onOpenChange={setOpened}>
-      <DialogContent className="sm:max-w-[350px]">
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit((values) => {
-              return row ? update({ ...row, ...values }) : create(values);
-            })}
-            className="space-y-8"
-          >
-            <DialogHeader>
-              <DialogTitle>Papel</DialogTitle>
-              <DialogDescription>
-                Adicione um novo papel ao sistema
-              </DialogDescription>
-            </DialogHeader>
-            <div>
-              <FormField
-                control={form.control}
-                name="role"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome do papel</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Digite um nome..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button" variant="secondary">
-                  Fechar
-                </Button>
-              </DialogClose>
-              <Button type="submit">{row ? "Editar" : "Adicionar"}</Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
+    <Dialog open={shouldShowContent} onOpenChange={setOpened}>
+      {shouldShowContent && (
+        <DialogContent className="sm:max-w-[350px]">
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit((values) => {
+                return row ? update({ ...row, ...values }) : create(values);
+              })}
+              className="space-y-8"
+            >
+              <DialogHeader>
+                <DialogTitle>Papel</DialogTitle>
+                <DialogDescription>
+                  Adicione um novo papel ao sistema
+                </DialogDescription>
+              </DialogHeader>
+              <div>
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome do papel</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Digite um nome..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button type="button" variant="secondary">
+                    Fechar
+                  </Button>
+                </DialogClose>
+                <Button type="submit">{row ? "Editar" : "Adicionar"}</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      )}
     </Dialog>
   );
 }

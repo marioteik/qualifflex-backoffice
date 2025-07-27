@@ -172,16 +172,6 @@ export default function ChatForm() {
                           className="w-full"
                         >
                           {group.messages.map((msg, msgIdx) => {
-                            if (
-                              msg.senderId ===
-                              room.shipment.recipient.user?.userId
-                            ) {
-                              console.log(
-                                msg.senderId,
-                                room.shipment.recipient.user?.userId
-                              );
-                            }
-
                             const isLastInGroup =
                               msgIdx === group.messages.length - 1;
                             // Format the message time

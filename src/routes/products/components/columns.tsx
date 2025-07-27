@@ -47,8 +47,6 @@ export const columns: (ColumnDef<SelectProduct> & { columnName?: string })[] = [
     ),
     size: 10,
     filterFn: (row, id, value: string) => {
-      console.log(value);
-
       const codeReference = row.original.code
         .toLowerCase()
         .split(" ")

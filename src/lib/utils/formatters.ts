@@ -18,11 +18,25 @@ export function formatDate(date: string | Date) {
 }
 
 export function formatCEP(value: string) {
-  return value.replace(/(\d{5})(\d{3})/, "$1-$2");
+  return value.padStart(8, "0").replace(/(\d{5})(\d{3})/, "$1-$2");
 }
 
 export function formatToBRPhone(value: string) {
-  return value.replace(/(\d{2})(\d{1})(\d{4})(\d{4})/, "($1) $2$3-$4");
+  // Remove any non-digit characters
+  const cleanValue = value.replace(/\D/g, "");
+
+  // Handle mobile numbers (11 digits)
+  if (cleanValue.length === 11) {
+    return cleanValue.replace(/(\d{2})(\d{1})(\d{4})(\d{4})/, "($1) $2$3-$4");
+  }
+
+  // Handle landline numbers (10 digits)
+  if (cleanValue.length === 10) {
+    return cleanValue.replace(/(\d{2})(\d{4})(\d{4})/, "($1) $2-$3");
+  }
+
+  // Return original value if it doesn't match expected formats
+  return value;
 }
 
 export function formatCPFOrCNPJ(value: string) {

@@ -1,5 +1,3 @@
-import logo from "@/assets/logo.png";
-import apollo from "@/assets/apolo_login.png";
 import { Input } from "@/components/ui/input";
 import { Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -63,13 +61,13 @@ export default function ForgotPassword() {
     <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2 bg-white dark:bg-background">
       <div className="flex items-center justify-center py-12">
         <div className="mx-auto grid w-[350px] gap-10">
-          <h1 className="text-3xl font-bold">
-            <img
-              src={logo}
-              alt="Logo"
-              className="h-auto w-full object-cover object-right dark:brightness-[0.2] dark:grayscale"
-            />
-          </h1>
+                      <h1 className="text-3xl font-bold">
+              <img
+                src="/logo.png"
+                alt="Logo"
+                className="h-auto w-full object-cover object-right dark:brightness-[0.2] dark:grayscale"
+              />
+            </h1>
 
           <Form {...form}>
             <form
@@ -96,13 +94,13 @@ export default function ForgotPassword() {
           </Form>
         </div>
       </div>
-      <div className="hidden bg-muted lg:block">
-        <img
-          src={apollo}
-          alt="Apolo Mascote"
-          className="h-full w-full object-cover object-right"
-        />
-      </div>
+              <div className="hidden bg-muted lg:block">
+          <img
+            src="/apolo_login.png"
+            alt="Apolo Mascote"
+            className="h-full w-full object-cover object-right"
+          />
+        </div>
     </div>
   );
 }

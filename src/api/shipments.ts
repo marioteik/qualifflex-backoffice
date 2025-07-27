@@ -8,7 +8,11 @@ import {
 } from "@/lib/utils/fetch-with-token";
 import { handleSettledMutation } from "@/lib/utils/handle-optimistic-mutation";
 import type { QueryOptions } from "../../types/query-options";
-import type { InsertShipment, SelectShipment } from "@/schemas/shipments";
+import type {
+  InsertShipment,
+  SelectShipment,
+  ShipmentHistory,
+} from "@/schemas/shipments";
 
 const route = "/api/shipments";
 
@@ -31,7 +35,7 @@ export function useShipment(id: string) {
 export function useShipmentHistory(id: string) {
   return useQuery({
     queryKey: queryKeyFactory.shipmentHistory(id),
-    queryFn: fetchWithToken<SelectShipment[]>(`${route}/${id}/history`),
+    queryFn: fetchWithToken<ShipmentHistory[]>(`${route}/${id}/history`),
     enabled: !!id,
   });
 }

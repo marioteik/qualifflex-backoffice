@@ -1,13 +1,22 @@
 import { useShipmentHistory } from "@/api/shipments";
 import { CardContent } from "@/components/ui/card";
 import { Card } from "@/components/ui/card";
-import { SelectShipment } from "@/schemas/shipments";
+import { Button } from "@/components/ui/button";
+import { SelectShipment, ShipmentHistory } from "@/schemas/shipments";
 import { format } from "date-fns";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { ArrowUpDown } from "lucide-react";
 
-const getStatusDescription = (status?: string) => {
-  switch (status) {
+const getStatusDescription = (item: ShipmentHistory) => {
+  switch (item.status) {
     case "Confirmado":
+      if (item.shipment.informedEstimation) {
+        return `Negociação de data aprovada pelo backoffice para ${format(
+          item.shipment.informedEstimation,
+          "dd/MM/yyyy"
+        )}`;
+      }
+
       return "Remessa confirmada pela costureira";
     case "Coletado":
       return "Remessa coletada";
@@ -22,14 +31,17 @@ const getStatusDescription = (status?: string) => {
     case "Pendente":
       return "Remessa pendente";
     case "Pendente aprovação":
-      return "Remessa pendente aprovação";
+      return `Pedido de negociação de prazo pela costureira para ${format(
+        item.shipment.informedEstimation!,
+        "dd/MM/yyyy"
+      )}`;
     default:
       return "Status atualizado";
   }
 };
 
-const getStatusColor = (status: string) => {
-  switch (status) {
+const getStatusColor = (item: ShipmentHistory) => {
+  switch (item.status) {
     case "Importado":
       return "bg-blue-500";
     case "Confirmado":
@@ -59,12 +71,14 @@ export default function ShipmentDetailHistory({
   shipment: SelectShipment;
 }) {
   const { data: history } = useShipmentHistory(shipment.id);
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   const historyItems = useMemo(() => {
     const items = [
       {
         status: "Importado",
         updated_at: format(shipment.createdAt, "dd/MM/yyyy HH:mm"),
+        updated_at_date: shipment.createdAt,
         updated_by: "Sistema",
         description: "Remessa importada do CIGAM",
       },
@@ -72,25 +86,47 @@ export default function ShipmentDetailHistory({
 
     if (history && history.length > 0) {
       const historyMapped = history.map((item) => ({
-        status: getStatusDescription(item.status),
-        updated_at: format(
-          item.updatedAt ?? item.createdAt,
-          "dd/MM/yyyy HH:mm"
-        ),
-        updated_by: "Sistema",
-        description: getStatusDescription(item.status),
+        status: getStatusDescription(item),
+        updated_at: format(item.updatedAt, "dd/MM/yyyy HH:mm"),
+        updated_at_date: item.updatedAt,
+        updated_by:
+          item.updatedBy.profile?.fullName ||
+          item.updatedBy?.email ||
+          "Sistema",
+        description: getStatusDescription(item),
       }));
+
       items.push(...historyMapped);
     }
 
-    return items;
-  }, [history, shipment]);
+    return items.sort((a, b) => {
+      const timeA = new Date(a.updated_at_date).getTime();
+      const timeB = new Date(b.updated_at_date).getTime();
+
+      return sortOrder === "desc" ? timeB - timeA : timeA - timeB;
+    });
+  }, [history, shipment, sortOrder]);
+
+  const toggleSortOrder = () => {
+    setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"));
+  };
 
   return (
     <Card>
-      <CardContent className="p-6 text-sm flex-1 overflow-y-auto">
+      <CardContent className="p-4 text-sm flex-1 overflow-y-auto">
         <div className="flex flex-col w-full gap-6">
-          <div className="font-semibold text-lg">Histórico da Remessa</div>
+          <div className="flex items-center justify-between">
+            <div className="font-semibold text-lg">Histórico da Remessa</div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleSortOrder}
+              className="flex items-center gap-2"
+            >
+              <ArrowUpDown className="h-4 w-4" />
+              {sortOrder === "desc" ? "Mais recente" : "Mais antigo"}
+            </Button>
+          </div>
 
           {/* Timeline */}
           <div className="relative">
@@ -107,7 +143,7 @@ export default function ShipmentDetailHistory({
                 {/* Timeline dot */}
                 <div
                   className={`relative z-10 flex items-center justify-center w-8 h-8 rounded-full ${getStatusColor(
-                    item.status
+                    item as unknown as ShipmentHistory
                   )} flex-shrink-0`}
                 >
                   <div className="w-3 h-3 bg-white rounded-full"></div>

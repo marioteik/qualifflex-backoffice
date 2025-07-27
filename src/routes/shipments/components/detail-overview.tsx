@@ -4,6 +4,7 @@ import { CardContent } from "@/components/ui/card";
 import {
   formatCEP,
   formatCPFOrCNPJ,
+  formatDate,
   formatToBRPhone,
 } from "@/lib/utils/formatters";
 
@@ -58,7 +59,7 @@ const DetailPill = ({
 
 const RelatedShipmentCard = ({ shipment }: { shipment: SelectShipment }) => {
   return (
-    <Card className="flex-1 cursor-pointer hover:shadow-md transition-shadow">
+    <Card className="flex-1 cursor-pointer hover:shadow-md transition-shadow ">
       <CardContent className="p-4">
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
@@ -89,7 +90,7 @@ const RelatedShipmentCard = ({ shipment }: { shipment: SelectShipment }) => {
           <div className="text-sm text-muted-foreground">
             Total:{" "}
             <span className="font-medium text-foreground">
-              {formatToBRL(shipment.financialCalc?.totalInvoiceValue)}
+              {formatToBRL(shipment.totalInvoiceValue ?? 0)}
             </span>
           </div>
           <Button variant="outline" size="sm" className="w-full" asChild>
@@ -133,10 +134,43 @@ export default function ShipmentDetailOverview({
     <>
       <Card>
         <CardContent className="text-sm flex-1 overflow-y-auto flex flex-col w-full gap-4 p-5">
+          <div className="grid grid-cols-4 gap-4 text-center">
+            <div className="text-left">
+              <p className="text-xl font-medium text-primary font-mono">
+                {shipment.ordersToBuy?.codeReference ?? "-"}
+              </p>
+              <p className="text-sm text-muted-foreground">Ordem de Compra</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xl font-medium text-muted-foreground font-mono">
+                {formatDate(shipment.entryExitDate ?? "")}
+              </p>
+              <p className="text-sm text-muted-foreground">Data de Emissão</p>
+            </div>
+            <div>
+              <p className="text-xl font-medium text-muted-foreground font-mono">
+                {formatDate(shipment.systemEstimation ?? "")}
+              </p>
+              <p className="text-sm text-muted-foreground">Prazo de Produção</p>
+            </div>
+            <div className="text-right">
+              <p className="text-xl font-medium text-primary font-mono">
+                {formatToBRNumber(shipment.offsetDays ?? 0)} dias
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Offset de Produção
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="text-sm flex-1 overflow-y-auto flex flex-col w-full gap-4 p-5">
           <div className="font-semibold text-base">
             Informações do Prestador
           </div>
-          <dl className="grid gap-x-3 gap-y-4 grid-cols-3">
+          <dl className="grid gap-x-3 gap-y-3 grid-cols-3">
             <DetailPill
               label="Nome Fantasia"
               value={shipment.recipient.businessInfo.tradeName}
@@ -151,11 +185,13 @@ export default function ShipmentDetailOverview({
               value={formatCPFOrCNPJ(
                 shipment.recipient.businessInfo.cnpjCpf ?? ""
               )}
+              className="font-mono"
             />
 
             <DetailPill
               label="Inscrição Estadual"
               value={shipment.recipient.businessInfo.stateRegistration}
+              className="font-mono"
             />
 
             <DetailPill
@@ -168,6 +204,7 @@ export default function ShipmentDetailOverview({
               value={formatToBRPhone(
                 shipment.recipient.businessInfo.phoneFax ?? ""
               )}
+              className="font-mono"
             />
 
             <DetailPill
@@ -181,7 +218,7 @@ export default function ShipmentDetailOverview({
       <Card>
         <CardContent className="text-sm flex-1 overflow-y-auto flex flex-col w-full gap-4 p-5">
           <div className="font-semibold text-base">Endereço do Prestador</div>
-          <dl className="grid gap-x-3 gap-y-4 grid-cols-3">
+          <dl className="grid gap-x-3 gap-y-3 grid-cols-3">
             <DetailPill
               label="Logradouro"
               value={shipment.recipient.location.route}
@@ -209,6 +246,7 @@ export default function ShipmentDetailOverview({
             <DetailPill
               label="CEP"
               value={formatCEP(shipment.recipient.location.postalCode)}
+              className="font-mono"
             />
 
             <DetailPill

@@ -217,7 +217,7 @@ export const columns: (ColumnDef<SelectShipment> & { columnName?: string })[] =
       enableHiding: true,
     },
     {
-      accessorKey: "informedEstimation",
+      accessorKey: "systemEstimation",
       columnName: "Prazo",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Prazo" />
@@ -227,6 +227,22 @@ export const columns: (ColumnDef<SelectShipment> & { columnName?: string })[] =
         <div className="w-full text-center">
           {row.original.systemEstimation
             ? format(new Date(row.original.systemEstimation!), "dd/MM/yyyy")
+            : "-"}
+        </div>
+      ),
+      enableHiding: true,
+    },
+    {
+      accessorKey: "informedEstimation",
+      columnName: "Prazo requerido",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Prazo requerido" />
+      ),
+      size: 200,
+      cell: ({ row }) => (
+        <div className="w-full text-center">
+          {row.original.informedEstimation
+            ? format(new Date(row.original.informedEstimation!), "dd/MM/yyyy")
             : "-"}
         </div>
       ),

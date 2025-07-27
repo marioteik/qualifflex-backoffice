@@ -7,9 +7,6 @@ const insertFinancialCalculationSchema = z.object({
   stIcmsValue: z.number().min(0, "ST ICMS value must be a non-negative number"),
   fcpValue: z.number().min(0, "FCP value must be a non-negative number"),
   pisValue: z.number().min(0, "PIS value must be a non-negative number"),
-  totalProductValue: z
-    .number()
-    .min(0, "Total product value must be a non-negative number"),
   freightValue: z
     .number()
     .min(0, "Freight value must be a non-negative number"),
@@ -30,7 +27,7 @@ const insertFinancialCalculationSchema = z.object({
 const selectFinancialCalculationSchema = insertFinancialCalculationSchema.merge(
   z.object({
     id: z.string().uuid(),
-  }),
+  })
 );
 
 type InsertFinancialCalculation = z.infer<

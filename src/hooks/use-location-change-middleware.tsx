@@ -13,15 +13,22 @@ let timeout: NodeJS.Timeout;
 export default function useLocationChangeMiddleware() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { session, setSession } = useGlobalStore(
+  const { setSession, setRole } = useGlobalStore(
     useShallow((state) => ({
-      session: state.session,
       setSession: state.setSession,
+      setRole: state.setRole,
     }))
   );
 
   useEffect(() => {
     (async () => {
+      const hash = window.location.hash;
+      const hashParams = new URLSearchParams(hash.substring(1));
+
+      if (hashParams.get("access_token")) {
+        return;
+      }
+
       try {
         const data = await queryClient.fetchQuery({
           queryKey: queryKeyFactory.verify(),
@@ -33,9 +40,13 @@ export default function useLocationChangeMiddleware() {
         if ((data as { verify: boolean }).verify === false) {
           navigate("/auth/sign-out");
         }
+
+        setRole(data?.role?.role ?? null);
       } catch (error) {
         if (error instanceof AxiosError) {
           console.error("Error verifying session", error);
+
+          const session = useGlobalStore.getState().session;
 
           try {
             if (session) {
@@ -67,5 +78,5 @@ export default function useLocationChangeMiddleware() {
         );
       }
     }, 300);
-  }, [location.pathname, location.search, navigate, session, setSession]);
+  }, [location.pathname, location.search, navigate, setSession, setRole]);
 }

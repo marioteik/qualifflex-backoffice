@@ -44,7 +44,6 @@ export class NfeToShipment implements Shipment {
   recipient: Seamstress;
   products: Product[];
   carrier: Carrier;
-  financialCalc: NFEFinancialCalc;
 
   constructor(nfe: z.infer<typeof fileSchema>) {
     this.number = nfe.nFe.infNFe.ide.nNF;

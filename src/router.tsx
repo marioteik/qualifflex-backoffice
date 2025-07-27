@@ -25,9 +25,11 @@ import Chats from "./routes/chats";
 import LoadList from "@/routes/load-list";
 import Products from "@/routes/products";
 import Orders from "@/routes/orders";
+import OrdersToBuy from "@/routes/orders-to-buy";
 import apiClient from "./api-client";
 import ForgotPassword from "./routes/auth/forgot-password";
 import ShipmentsImports from "./routes/shipments-imports";
+import axios from "axios";
 
 const router = createBrowserRouter([
   {
@@ -38,10 +40,56 @@ const router = createBrowserRouter([
       </Providers>
     ),
     loader: async () => {
+      const hash = window.location.hash;
+
+      if (hash) {
+        const hashParams = new URLSearchParams(hash.substring(1));
+        const accessToken = hashParams.get("access_token");
+        const refreshToken = hashParams.get("refresh_token");
+        const expiresAt = hashParams.get("expires_at");
+        const expiresIn = hashParams.get("expires_in");
+        const tokenType = hashParams.get("token_type");
+
+        const { data, status } = await axios.get(
+          import.meta.env.VITE_API_DOMAIN + "/api/auth/verify",
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
+
+        if (status !== 200) {
+          return redirect("/auth/sign-in");
+        }
+
+        if (data.user) {
+          await new Promise((resolve) => {
+            useGlobalStore.getState().setSession?.({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+              expires_at: expiresAt,
+              token_type: tokenType,
+              expires_in: expiresIn,
+              user: data.user,
+            });
+
+            setTimeout(() => {
+              resolve(true);
+            }, 200);
+          });
+
+          window.history.replaceState(null, "", "/");
+          return redirect("/");
+        }
+
+        return null;
+      }
+
       const session = useGlobalStore.getState().session;
 
       if (!session) {
-        return redirect("/auth/sign-out");
+        return redirect("/auth/sign-in");
       }
 
       return null;
@@ -169,6 +217,30 @@ const router = createBrowserRouter([
             ],
           },
           {
+            path: "confirmed",
+            element: <Shipments key="confirmed" />,
+            handle: {
+              crumb: () => (
+                <BreadcrumbLink asChild>
+                  <Link to="/shipments/confirmed">Confirmados</Link>
+                </BreadcrumbLink>
+              ),
+            },
+            children: [
+              {
+                path: ":id",
+                element: <Shipments key="confirmed" />,
+                handle: {
+                  crumb: () => (
+                    <BreadcrumbLink asChild>
+                      <Link to="/shipments/confirmed">Confirmados</Link>
+                    </BreadcrumbLink>
+                  ),
+                },
+              },
+            ],
+          },
+          {
             path: "in-production",
             element: <Shipments key="in-production" />,
             handle: {
@@ -198,7 +270,7 @@ const router = createBrowserRouter([
             handle: {
               crumb: () => (
                 <BreadcrumbLink asChild>
-                  <Link to="/shipments/collected">Em Produção</Link>
+                  <Link to="/shipments/collected">Coletados</Link>
                 </BreadcrumbLink>
               ),
             },
@@ -209,7 +281,7 @@ const router = createBrowserRouter([
                 handle: {
                   crumb: () => (
                     <BreadcrumbLink asChild>
-                      <Link to="/shipments/collected">Em Produção</Link>
+                      <Link to="/shipments/collected">Coletados</Link>
                     </BreadcrumbLink>
                   ),
                 },
@@ -251,17 +323,17 @@ const router = createBrowserRouter([
               ),
             },
             children: [
-          {
-            path: ":id",
+              {
+                path: ":id",
                 element: <Shipments key="archive" />,
-            handle: {
+                handle: {
                   crumb: () => (
                     <BreadcrumbLink asChild>
                       <Link to="/shipments/arquivo">Arquivo</Link>
                     </BreadcrumbLink>
                   ),
                 },
-            },
+              },
             ],
           },
         ],
@@ -342,12 +414,32 @@ const router = createBrowserRouter([
         ],
       },
       {
+        path: "orders-to-buy",
+        element: <Outlet />,
+        handle: {
+          crumb: () => <BreadcrumbLink>Ordens de Compra</BreadcrumbLink>,
+        },
+        children: [
+          {
+            index: true,
+            element: <OrdersToBuy />,
+          },
+          {
+            path: ":id",
+            element: <OrdersToBuy />,
+            handle: {
+              crumb: () => <BreadcrumbLink>Ordens de Compra</BreadcrumbLink>,
+            },
+          },
+        ],
+      },
+      {
         path: "shipments-imports",
         element: <ShipmentsImports />,
         handle: {
           crumb: () => (
             <BreadcrumbLink asChild>
-              <Link to="/shipments-imports">Remessas sincronizadas</Link>
+              <Link to="/shipments-imports">Remessas importadas</Link>
             </BreadcrumbLink>
           ),
         },

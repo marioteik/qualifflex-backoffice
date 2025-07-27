@@ -29,6 +29,7 @@ import RoleForm from "@/routes/permissions/roles/components/role-form";
 import DeleteModal from "@/routes/permissions/roles/components/delete-modal";
 import { useRolesStore } from "@/routes/permissions/roles/data/store";
 import { useShallow } from "zustand/react/shallow";
+import { useEffect } from "react";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -77,6 +78,20 @@ export function DataTable<TData, TValue>({
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
+
+  
+  useEffect(() => {
+    if (!editOpened) {
+      console.log("remove pointer events");
+      document.body.style.removeProperty("pointer-events");
+    }
+  }, [editOpened]);
+
+  useEffect(() => {
+    if (!deleteOpened) {
+      document.body.style.removeProperty("pointer-events");
+    }
+  }, [deleteOpened]);
 
   return (
     <>
@@ -145,11 +160,9 @@ export function DataTable<TData, TValue>({
         <DataTablePagination table={table} />
       </div>
 
-      {editOpened && <RoleForm opened={editOpened} setOpened={setEditOpened} />}
+      <RoleForm opened={editOpened} setOpened={setEditOpened} />
 
-      {deleteOpened && (
-        <DeleteModal opened={deleteOpened} setOpened={setDeleteOpened} />
-      )}
+      <DeleteModal opened={deleteOpened} setOpened={setDeleteOpened} />
     </>
   );
 }

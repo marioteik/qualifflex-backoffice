@@ -3,12 +3,15 @@ export const queryKeyFactory = {
   signIn: () => queryKeyFactory.base("signIn"),
   signUp: () => queryKeyFactory.base("signUp"),
   verify: () => queryKeyFactory.base("verify"),
+  session: () => queryKeyFactory.base("session"),
   users: () => queryKeyFactory.base("users"),
   roles: () => queryKeyFactory.base("roles"),
   driversPositions: () => queryKeyFactory.base("driversPositions"),
   products: () => queryKeyFactory.base("products"),
   orders: () => queryKeyFactory.base("orders"),
   order: (id: string) => [...queryKeyFactory.base("orders"), id],
+  ordersToBuy: () => queryKeyFactory.base("ordersToBuy"),
+  orderToBuy: (id: string) => [...queryKeyFactory.base("ordersToBuy"), id],
   routes: () => queryKeyFactory.base("routes"),
   roleByUserId: () => queryKeyFactory.base("roleByUserId"),
   permissions: () => queryKeyFactory.base("permissions"),
@@ -27,6 +30,7 @@ export const queryKeyFactory = {
   seamstress: () => queryKeyFactory.base("seamstress"),
   chats: () => queryKeyFactory.base("chats"),
   chatRooms: () => queryKeyFactory.base("chatRooms"),
+
   chatRoomMessages: () => queryKeyFactory.base("chatRoomMessages"),
   shipmentsImports: () => queryKeyFactory.base("shipmentsImports"),
 };

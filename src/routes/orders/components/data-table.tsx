@@ -53,6 +53,8 @@ export default function OrdersTable() {
     }))
   );
 
+  console.log(columnVisibility);
+
   const { data } = useOrders();
 
   // Build the table

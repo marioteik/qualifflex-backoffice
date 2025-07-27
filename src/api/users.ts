@@ -74,3 +74,12 @@ export function useAssignRoleToUser(options: QueryOptions = {}) {
     ...options,
   });
 }
+
+export function useInviteUserByEmail(options: QueryOptions = {}) {
+  return useMutation({
+    mutationKey: queryKeyFactory.users(),
+    mutationFn: postWithToken(route + "/invite"),
+    ...handleSettledMutation(queryKeyFactory.users()),
+    ...options,
+  });
+}

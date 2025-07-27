@@ -7,9 +7,11 @@ import {
   Package,
   CheckCircle,
   AlertCircle,
+  XCircle,
 } from "lucide-react";
 import { formatDate, formatToBRNumber } from "@/lib/utils/formatters";
 import { cn } from "@/lib/utils";
+import { differenceInDays } from "date-fns";
 
 interface OrderDetailTimelineProps {
   order: any; // Replace with proper order type
@@ -86,17 +88,17 @@ export default function OrderDetailTimeline({
   };
 
   const orderStartDate = new Date(order.createdAt);
+  
   const latestDate = shipments.reduce((latest, shipment) => {
-    const shipmentDate = new Date(
-      shipment.estimatedDelivery || shipment.createdAt
-    );
+    const shipmentDate = shipment.systemEstimation;
+
     return shipmentDate > latest ? shipmentDate : latest;
   }, orderStartDate);
 
-  const totalDays =
-    Math.ceil(
-      (latestDate.getTime() - orderStartDate.getTime()) / (1000 * 60 * 60 * 24)
-    ) || 1;
+  const remainingDays = differenceInDays(latestDate, new Date()) || 1;
+
+  const amountLate = shipments.filter((shipment) => shipment.systemEstimation && shipment.systemEstimation < new Date()).length;
+  const runningShipments = shipments.filter((shipment) => !shipment.finishedAt).length;
 
   return (
     <div className="space-y-4">
@@ -104,21 +106,21 @@ export default function OrderDetailTimeline({
         <CardContent className="pt-6">
           <div className="grid grid-cols-4 gap-4 text-center">
             <div>
-              <p className="text-lg font-bold">{shipments.length}</p>
+              <p className="text-2xl font-medium font-mono">{shipments.length}</p>
               <p className="text-sm text-muted-foreground">Remessas</p>
             </div>
             <div>
-              <p className="text-lg font-bold">{formatDate(order.createdAt)}</p>
-              <p className="text-sm text-muted-foreground">Início do Pedido</p>
+              <p className="text-xl font-medium font-mono">{formatDate(order.createdAt)}</p>
+              <p className="text-sm text-muted-foreground">Início</p>
             </div>
             <div>
-              <p className="text-lg font-bold">{totalDays} dias</p>
-              <p className="text-sm text-muted-foreground">Duração Total</p>
+              <p className="text-xl font-medium font-mono">{remainingDays} dias</p>
+              <p className="text-sm text-muted-foreground">Dias Restantes</p>
             </div>
             <div>
-              <p className="text-lg font-bold">
-                {order.deliveryDate
-                  ? formatDate(order.deliveryDate)
+              <p className="text-xl font-medium font-mono">
+                {latestDate
+                  ? formatDate(latestDate)
                   : "Não definido"}
               </p>
               <p className="text-sm text-muted-foreground">Prazo Final</p>
@@ -127,22 +129,12 @@ export default function OrderDetailTimeline({
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card>
           <CardContent className="pt-6 text-center">
             <Clock className="h-8 w-8 text-orange-500 mx-auto mb-2" />
-            <p className="text-2xl font-bold">
-              {
-                shipments.filter((s: any) =>
-                  [
-                    "Pendente",
-                    "Pendente aprovação",
-                    "Confirmado",
-                    "Produzindo",
-                    "Produção parcial",
-                  ].includes(s.status)
-                ).length
-              }
+            <p className="text-3xl font-medium font-mono">
+              {runningShipments}
             </p>
             <p className="text-sm text-muted-foreground">Em Andamento</p>
           </CardContent>
@@ -151,7 +143,7 @@ export default function OrderDetailTimeline({
         <Card>
           <CardContent className="pt-6 text-center">
             <Package className="h-8 w-8 text-primary mx-auto mb-2" />
-            <p className="text-2xl font-bold">
+            <p className="text-3xl font-medium font-mono">
               {shipments.filter((s: any) => s.status === "Finalizado").length}
             </p>
             <p className="text-sm text-muted-foreground">Finalizadas</p>
@@ -161,7 +153,7 @@ export default function OrderDetailTimeline({
         <Card>
           <CardContent className="pt-6 text-center">
             <CheckCircle className="h-8 w-8 text-green-500 mx-auto mb-2" />
-            <p className="text-2xl font-bold">
+            <p className="text-3xl font-medium font-mono">
               {shipments.filter((s: any) => s.status === "Coletado").length}
             </p>
             <p className="text-sm text-muted-foreground">Coletadas</p>
@@ -170,154 +162,24 @@ export default function OrderDetailTimeline({
 
         <Card>
           <CardContent className="pt-6 text-center">
-            <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
-            <p className="text-2xl font-bold">
+            <XCircle className="h-8 w-8 text-warning mx-auto mb-2" />
+            <p className="text-3xl font-medium font-mono">
               {shipments.filter((s: any) => s.status === "Recusado").length}
             </p>
             <p className="text-sm text-muted-foreground">Recusadas</p>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardContent className="pt-6 text-center">
+            <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
+            <p className="text-3xl font-medium font-mono">
+              {amountLate}
+            </p>
+            <p className="text-sm text-muted-foreground">Atrasadas</p>
+          </CardContent>
+        </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <CalendarDays className="size-4" />
-            Cronograma das Remessas
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            {sortedShipments.map((shipment, index) => {
-              const StatusIcon = getStatusIcon(shipment.status);
-              const statusColor = getStatusColor(shipment.status);
-              const daysSinceStart = calculateDuration(
-                order.createdAt,
-                shipment.createdAt
-              );
-              const daysToDeliver = shipment.estimatedDelivery
-                ? calculateDuration(
-                    shipment.createdAt,
-                    shipment.estimatedDelivery
-                  )
-                : 0;
-
-              return (
-                <div key={shipment.id} className="relative">
-                  {index !== sortedShipments.length - 1 && (
-                    <div className="absolute left-6 top-12 w-0.5 h-16 bg-border" />
-                  )}
-
-                  <div className="flex items-start gap-4">
-                    <div
-                      className={cn(
-                        "flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center",
-                        statusColor
-                      )}
-                    >
-                      <StatusIcon className="h-5 w-5" />
-                    </div>
-
-                    <div className="flex-grow min-w-0">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium">
-                          Remessa {formatToBRNumber(Number(shipment.number))}
-                        </h4>
-                        <Badge
-                          variant="outline"
-                          className={cn(statusColor.split(" ")[0])}
-                        >
-                          {shipment.status}
-                        </Badge>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                        <div>
-                          <p className="text-muted-foreground">Criada em</p>
-                          <p className="font-medium">
-                            {formatDate(shipment.createdAt)}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {daysSinceStart} dias após o pedido
-                          </p>
-                        </div>
-
-                        <div>
-                          <p className="text-muted-foreground">
-                            Previsão de Entrega
-                          </p>
-                          <p className="font-medium">
-                            {shipment.estimatedDelivery
-                              ? formatDate(shipment.estimatedDelivery)
-                              : "Não definida"}
-                          </p>
-                          {daysToDeliver > 0 && (
-                            <p className="text-xs text-muted-foreground">
-                              {daysToDeliver} dias de produção
-                            </p>
-                          )}
-                        </div>
-
-                        <div>
-                          <p className="text-muted-foreground">Produtos</p>
-                          <p className="font-medium">
-                            {shipment.itemsCount}{" "}
-                            {shipment.itemsCount === 1 ? "produto" : "produtos"}
-                          </p>
-                          {shipment.totalValue && (
-                            <p className="text-xs text-muted-foreground">
-                              R$ {shipment.totalValue.toLocaleString("pt-BR")}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Progress Bar for Timeline */}
-                      <div className="mt-3">
-                        <div className="flex justify-between items-center text-xs text-muted-foreground mb-1">
-                          <span>Progresso</span>
-                          <span>
-                            {new Date() >
-                            new Date(
-                              shipment.estimatedDelivery || shipment.createdAt
-                            )
-                              ? "Prazo vencido"
-                              : "No prazo"}
-                          </span>
-                        </div>
-                        <div className="w-full bg-muted rounded-full h-2">
-                          <div
-                            className={cn(
-                              "h-2 rounded-full transition-all",
-                              shipment.status === "Finalizado"
-                                ? "bg-green-500"
-                                : shipment.status === "Recusado"
-                                ? "bg-red-500"
-                                : "bg-blue-500"
-                            )}
-                            style={{
-                              width:
-                                shipment.status === "Finalizado"
-                                  ? "100%"
-                                  : shipment.status === "Recusado"
-                                  ? "100%"
-                                  : shipment.status === "Produzindo"
-                                  ? "60%"
-                                  : shipment.status === "Confirmado"
-                                  ? "30%"
-                                  : "10%",
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

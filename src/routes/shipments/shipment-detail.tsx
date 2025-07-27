@@ -1,9 +1,9 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useShipment } from "@/api/shipments";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, Copy, Share, Truck } from "lucide-react";
-import { formatToBRL, formatToBRNumber } from "@/lib/utils/formatters";
+import { formatToBRNumber } from "@/lib/utils/formatters";
 import { Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ import { useCopyValue } from "@/hooks/useCopyValue";
 import ShipmentDetailOverview from "./components/detail-overview";
 import ShipmentDetailItems from "./components/detail-items";
 import ShipmentDetailHistory from "./components/detail-history";
+import ShipmentDetailChat from "./components/detail-chat";
 
 export default function ShipmentDetail() {
   const { id } = useParams<{ id: string }>();
@@ -156,6 +157,12 @@ export default function ShipmentDetail() {
             >
               Histórico
             </TabsTrigger>
+            <TabsTrigger
+              value="chat"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              Chat
+            </TabsTrigger>
           </TabsList>
         </CardHeader>
       </Card>
@@ -170,6 +177,10 @@ export default function ShipmentDetail() {
 
       <TabsContent value="history">
         <ShipmentDetailHistory shipment={shipment} />
+      </TabsContent>
+
+      <TabsContent value="chat">
+        <ShipmentDetailChat shipment={shipment} />
       </TabsContent>
     </Tabs>
   );

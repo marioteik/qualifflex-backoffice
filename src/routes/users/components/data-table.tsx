@@ -29,6 +29,7 @@ import DeleteModal from "@/routes/users/components/delete-modal";
 import { useUsersStore } from "@/routes/users/data/store";
 import { useShallow } from "zustand/react/shallow";
 import { DataTablePagination } from "@/components/atoms/data-table-pagination";
+import { useEffect } from "react";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -52,7 +53,7 @@ export function DataTable<TData, TValue>({
     },
   ]);
 
-  const { editOpened, deleteOpened, disableOpened } = useUsersStore(
+  const { editOpened, deleteOpened } = useUsersStore(
     useShallow((state) => ({
       editOpened: state.isEditOpen,
       deleteOpened: state.isDeleteOpen,
@@ -83,6 +84,22 @@ export function DataTable<TData, TValue>({
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
+
+  useEffect(() => { 
+    if (!editOpened) {
+      setTimeout(() => {
+        document.body.style.removeProperty("pointer-events");
+      }, 300);
+    }
+  }, [editOpened]);
+
+  useEffect(() => {
+    if (!deleteOpened) {
+      setTimeout(() => {
+        document.body.style.removeProperty("pointer-events");
+      }, 300);
+    }
+  }, [deleteOpened]);
 
   return (
     <>
@@ -152,7 +169,7 @@ export function DataTable<TData, TValue>({
       </div>
 
       {editOpened && <UserForm />}
-      {(deleteOpened || disableOpened) && <DeleteModal />}
+      {deleteOpened && <DeleteModal />}
     </>
   );
 }
