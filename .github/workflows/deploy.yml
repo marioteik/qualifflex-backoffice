@@ -29,11 +29,8 @@ jobs:
 
       - name: Create deployment package
         run: |
-          mkdir deployment
-          cp -r dist/ deployment/
-          cp -r nginx-config/ deployment/ || true
-          cp -r scripts/ deployment/ || true
-          tar -czf deployment.tar.gz -C deployment .
+          # Create deployment package with built dist and config files
+          tar -czf deployment.tar.gz dist/ nginx-config/ scripts/
 
       - name: Setup deployment directory
         uses: appleboy/ssh-action@v1.0.3
