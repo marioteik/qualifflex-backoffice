@@ -109,8 +109,8 @@ server {
     location /backoffice {
         alias /home/__USERNAME__/apps/qualiflex-backoffice/current/dist;
         
-        # Try to serve request as file, then as directory, then fallback to index.html for SPA
-        try_files $uri $uri/ /backoffice/index.html;
+        # Try to serve request as file, then as directory, then fallback to SPA
+        try_files $uri $uri/ @backoffice_fallback;
         
         # Cache static assets
         location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
@@ -128,6 +128,16 @@ server {
             expires -1;
             add_header Cache-Control "no-cache, no-store, must-revalidate";
         }
+    }
+    
+    # SPA fallback for backoffice - serve index.html for all unmatched routes
+    location @backoffice_fallback {
+        alias /home/__USERNAME__/apps/qualiflex-backoffice/current/dist;
+        try_files /index.html =404;
+        
+        # Ensure proper content type
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+        expires -1;
     }
     
     # Health check endpoint for API
