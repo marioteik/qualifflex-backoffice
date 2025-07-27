@@ -33,7 +33,7 @@ jobs:
           cp -r scripts/ deployment/ || true
           tar -czf deployment.tar.gz -C deployment .
 
-      - name: Deploy to EC2
+      - name: Setup deployment directory
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -41,10 +41,12 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           port: ${{ secrets.EC2_PORT || 22 }}
           timeout: 30s
-          command_timeout: 10m
+          command_timeout: 5m
           script: |
-            # Create backoffice directory
-            mkdir -p /home/${{ secrets.EC2_USERNAME }}/apps/qualiflex-backoffice
+            # Create backoffice directory structure
+            sudo mkdir -p /home/${{ secrets.EC2_USERNAME }}/apps/qualiflex-backoffice
+            sudo chown -R ${{ secrets.EC2_USERNAME }}:${{ secrets.EC2_USERNAME }} /home/${{ secrets.EC2_USERNAME }}/apps/qualiflex-backoffice
+
             cd /home/${{ secrets.EC2_USERNAME }}/apps/qualiflex-backoffice
 
             # Backup current deployment if it exists
@@ -55,7 +57,6 @@ jobs:
 
             # Create new deployment directory
             mkdir -p current
-            cd current
 
       - name: Upload deployment package
         uses: appleboy/scp-action@v0.1.7
@@ -65,7 +66,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           port: ${{ secrets.EC2_PORT || 22 }}
           source: "deployment.tar.gz"
-          target: "/home/${{ secrets.EC2_USERNAME }}/apps/qualiflex-backoffice/current/"
+          target: "/home/${{ secrets.EC2_USERNAME }}/apps/qualiflex-backoffice/current"
 
       - name: Extract and setup
         uses: appleboy/ssh-action@v1.0.3

@@ -61,7 +61,7 @@ server {
     
     # Backoffice static files
     location /backoffice {
-        alias /home/ubuntu/apps/qualiflex-backoffice/current/dist;
+        alias /home/__USERNAME__/apps/qualiflex-backoffice/current/dist;
         
         # Try to serve request as file, then as directory, then fallback to index.html for SPA
         try_files $uri $uri/ /backoffice/index.html;
@@ -124,7 +124,7 @@ server {
     gzip_types text/plain text/css text/xml text/javascript application/javascript application/xml+rss application/json text/html;
     
     # Document root for backoffice
-    root /home/ubuntu/apps/qualiflex-backoffice/current/dist;
+    root /home/__USERNAME__/apps/qualiflex-backoffice/current/dist;
     index index.html;
     
     # Handle all routes for SPA
@@ -156,6 +156,10 @@ server {
     error_log /var/log/nginx/qualiflex-backoffice-custom-error.log;
 }
 EOF
+
+# Replace username placeholder with actual username
+print_status "Configuring paths for user: $USER"
+sudo sed -i "s|__USERNAME__|$USER|g" "$NGINX_CONFIG"
 
 # Enable the qualiflex-backoffice configuration
 print_status "Enabling Qualiflex Backoffice configuration..."
