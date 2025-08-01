@@ -49,11 +49,16 @@ jobs:
           # Navigate to deployment directory
           cd ~/htdocs/backoffice.qualiflex.com.br
           
-          # Backup current deployment
-          [ -d "current" ] && { rm -rf backup 2>/dev/null; mv current backup; } || true
+          # Backup existing files (exclude backup folder itself)
+          if [ "$(ls -A . 2>/dev/null | grep -v '^backup$' | wc -l)" -gt 0 ]; then
+            echo "📦 Creating backup..."
+            rm -rf backup
+            mkdir -p backup
+            find . -maxdepth 1 -not -name '.' -not -name 'backup' -exec mv {} backup/ \;
+          fi
           
-          # Extract new deployment
-          mkdir -p current && cd current
+          # Extract new deployment directly to root
+          echo "🚀 Deploying new files..."
           tar -xzf ~/backoffice-deployment.tar.gz
           
           # Clean up
@@ -64,10 +69,14 @@ jobs:
     - name: Verify deployment
       run: |
         ssh -p ${{ secrets.EC2_PORT }} ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} << 'EOF'
+          cd ~/htdocs/backoffice.qualiflex.com.br
           echo "🔍 Deployment verification:"
           echo "📁 Files in deployment directory:"
-          ls -la ~/htdocs/backoffice.qualiflex.com.br/current/ | head -10
+          ls -la | grep -v '^total' | head -10
           echo ""
           echo "📊 Deployment size:"
-          du -sh ~/htdocs/backoffice.qualiflex.com.br/current/
+          du -sh . --exclude=backup
+          echo ""
+          echo "✅ index.html exists:" 
+          [ -f "index.html" ] && echo "Yes" || echo "No"
         EOF
