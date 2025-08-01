@@ -1,275 +1,73 @@
-name: Deploy Qualiflex Backoffice
+name: Deploy Backoffice to Production
 
 on:
-  workflow_dispatch:
-    inputs:
-      target_environment:
-        description: "Target environment"
-        required: true
-        default: "production"
-        type: choice
-        options:
-          - production
-          - staging
   push:
-    branches:
-      - main
-    paths:
-      - "src/**"
-      - "public/**"
-      - "package.json"
-      - "package-lock.json"
-      - "vite.config.ts"
-      - ".github/workflows/deploy.yml"
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: "npm"
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
+    - name: Install dependencies
+      run: npm ci
 
-      - name: Create environment file
-        run: |
-          echo "🔍 Creating .env file with variables:"
+    - name: Build React app
+      env:
+        VITE_API_DOMAIN: ${{ vars.VITE_API_DOMAIN }}
+        VITE_BASE_PATH: ${{ vars.VITE_BASE_PATH }}
+        VITE_GOOGLE_MAPS_API_KEY: ${{ vars.VITE_GOOGLE_MAPS_API_KEY }}
+      run: npm run build
 
-          cat > .env << EOF
-          VITE_BASE_PATH=${{ vars.VITE_BASE_PATH }}
-          VITE_API_DOMAIN=${{ vars.VITE_API_DOMAIN }}
-          VITE_GOOGLE_MAPS_API_KEY=${{ vars.VITE_GOOGLE_MAPS_API_KEY }}
-          EOF
+    - name: Setup SSH key
+      run: |
+        mkdir -p ~/.ssh && chmod 700 ~/.ssh
+        printf '%s\n' "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -p ${{ secrets.EC2_PORT }} ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-          echo "📄 .env file contents:"
-          cat .env
+    - name: Deploy to server
+      run: |
+        # Create deployment package
+        tar -czf backoffice-deployment.tar.gz -C dist .
 
-          echo "ℹ️  Note: VITE_API_DOMAIN should include the full API URL without the '/api' path"
+        # Upload to server
+        scp -P ${{ secrets.EC2_PORT }} backoffice-deployment.tar.gz ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:~/
+        
+        # Deploy on server
+        ssh -p ${{ secrets.EC2_PORT }} ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} << 'EOF'
+          # Navigate to deployment directory
+          cd ~/htdocs/backoffice.qualiflex.com.br
+          
+          # Backup current deployment
+          [ -d "current" ] && { rm -rf backup 2>/dev/null; mv current backup; } || true
+          
+          # Extract new deployment
+          mkdir -p current && cd current
+          tar -xzf ~/backoffice-deployment.tar.gz
+          
+          # Clean up
+          rm ~/backoffice-deployment.tar.gz
+          echo "✅ Backoffice deployment completed successfully"
+        EOF
 
-      - name: Build application
-        run: |
-          echo "🔨 Building application..."
-          echo "Environment variables visible to build:"
-          echo "VITE_BASE_PATH: '$VITE_BASE_PATH'"
-          echo "VITE_API_DOMAIN: '$VITE_API_DOMAIN'"
-
-          # Load .env into current shell environment
-          export $(grep -v '^#' .env | xargs)
-
-          echo "After loading .env:"
-          echo "VITE_BASE_PATH: '$VITE_BASE_PATH'"
-          echo "VITE_API_DOMAIN: '$VITE_API_DOMAIN'"
-
-          npm run build
-
-          echo "📦 Build completed. Checking build output:"
-          ls -la dist/
-
-          echo "🔍 Checking index.html for base path:"
-          if [ -f "dist/index.html" ]; then
-            grep -n "href\|src" dist/index.html | head -5
-          fi
-
-      - name: Deploy Backoffice to Server
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: ${{ secrets.EC2_PORT || 22 }}
-          timeout: 30s
-          command_timeout: 10m
-          script: |
-            echo "🚀 Starting Qualiflex Backoffice deployment..."
-            echo "Environment: ${{ inputs.target_environment || 'production' }}"
-
-            # Create the correct nginx web directory structure
-            echo "📁 Setting up web directories..."
-            sudo mkdir -p /var/www/html/backoffice/build
-
-            # Backup current deployment if it exists
-            if [ -d "/var/www/html/backoffice/build" ] && [ "$(ls -A /var/www/html/backoffice/build 2>/dev/null)" ]; then
-              echo "💾 Backing up current deployment..."
-              sudo rm -rf /var/www/html/backoffice/build.backup
-              sudo cp -r /var/www/html/backoffice/build /var/www/html/backoffice/build.backup
-            fi
-
-            # Create staging directory
-            STAGING_DIR="/tmp/qualiflex-backoffice-staging-$$"
-            mkdir -p $STAGING_DIR
-            cd $STAGING_DIR
-
-            # Clone or update repository
-            REPO_URL="https://github.com/${{ github.repository }}.git"
-            BRANCH="${{ github.ref_name }}"
-
-            if [ -d "repo" ]; then
-              echo "📁 Updating existing repository..."
-              cd repo
-              git fetch origin
-              git reset --hard origin/$BRANCH
-              git clean -fd
-              cd ..
-            else
-              echo "📁 Cloning repository..."
-              git clone -b $BRANCH "$REPO_URL" repo
-            fi
-
-            cd repo
-
-            # Check Node.js and npm
-            echo "🔍 Checking Node.js environment..."
-            node --version
-            npm --version
-
-            # Install dependencies
-            echo "📦 Installing dependencies..."
-            npm ci
-
-            # Create environment file
-            echo "🔧 Creating environment file..."
-            cat > .env << 'ENVEOF'
-            VITE_BASE_PATH=${{ vars.VITE_BASE_PATH || '' }}
-            VITE_API_DOMAIN=${{ vars.VITE_API_DOMAIN }}
-            VITE_GOOGLE_MAPS_API_KEY=${{ vars.VITE_GOOGLE_MAPS_API_KEY || '' }}
-            ENVEOF
-
-            # Build application
-            echo "🔨 Building application..."
-            npm run build
-
-            # Verify build output
-            if [ ! -d "dist" ] || [ ! -f "dist/index.html" ]; then
-              echo "❌ Build failed - dist directory or index.html not found"
-              exit 1
-            fi
-
-            echo "✅ Build completed successfully"
-            ls -la dist/
-
-            # Deploy to nginx web directory
-            echo "🚀 Deploying to web server..."
-
-            # Clear current web directory
-            sudo rm -rf /var/www/html/backoffice/build/*
-
-            # Copy built files to the correct nginx location
-            sudo cp -r dist/* /var/www/html/backoffice/build/
-
-            # Set proper permissions for nginx
-            echo "🔒 Setting permissions..."
-            sudo chown -R www-data:www-data /var/www/html/backoffice
-            sudo find /var/www/html/backoffice -type f -exec chmod 644 {} \;
-            sudo find /var/www/html/backoffice -type d -exec chmod 755 {} \;
-
-            # Ensure parent directories have correct permissions
-            sudo chmod 755 /var/www/html
-            sudo chmod 755 /var/www/html/backoffice
-
-            # Optional nginx reload (non-blocking)
-            echo "🔄 Attempting nginx reload..."
-            if sudo systemctl reload nginx 2>/dev/null; then
-              echo "✅ Nginx reloaded successfully"
-            else
-              echo "⚠️ Nginx reload failed (this may be normal if nginx config has issues)"
-              echo "   Files have been deployed successfully anyway"
-            fi
-
-            # Wait for nginx to reload
-            sleep 3
-
-            # Health check
-            echo "🏥 Performing health check..."
-
-            # Check if index.html exists and is readable
-            if [ -f "/var/www/html/backoffice/build/index.html" ]; then
-              echo "✅ Index.html found at correct location"
-              ls -la /var/www/html/backoffice/build/index.html
-            else
-              echo "❌ Index.html not found at /var/www/html/backoffice/build/"
-              exit 1
-            fi
-
-            # Test local access
-            if curl -f http://localhost/backoffice/ >/dev/null 2>&1; then
-              echo "✅ Backoffice accessible via nginx proxy"
-            else
-              echo "⚠️ Backoffice not accessible via nginx proxy (this may be normal if custom domain is configured)"
-            fi
-
-            # Test custom domain (if DNS is configured)
-            if curl -f http://backoffice.qualiflex.com.br/ >/dev/null 2>&1; then
-              echo "✅ Backoffice accessible at custom domain"
-            else
-              echo "⚠️ Custom domain not accessible yet"
-              echo "   This is normal if DNS is not configured or SSL is required"
-              echo "   Try: curl -f -H 'Host: backoffice.qualiflex.com.br' http://localhost/"
-              
-              # Test with host header
-              if curl -f -H "Host: backoffice.qualiflex.com.br" http://localhost/ >/dev/null 2>&1; then
-                echo "✅ Custom domain works with host header - DNS issue"
-              else
-                echo "⚠️ Custom domain configuration may need checking"
-              fi
-            fi
-
-            # Cleanup staging directory
-            cd /tmp
-            rm -rf $STAGING_DIR
-
-            echo ""
-            echo "🎉 Backoffice deployment completed successfully!"
-            echo ""
-            echo "📋 Deployment Summary:"
-            echo "✅ Files deployed to: /var/www/html/backoffice/build/"
-            echo "✅ Permissions set for nginx"
-            echo "✅ Nginx configuration tested and reloaded"
-            echo ""
-            echo "🌐 Access your backoffice at:"
-            echo "   - Custom domain: http://backoffice.qualiflex.com.br/"
-            echo "   - With SSL: https://backoffice.qualiflex.com.br/ (after SSL setup)"
-            echo ""
-            echo "📝 Next steps:"
-            echo "1. Verify DNS points to your server IP"
-            echo "2. Run nginx SSL setup if needed"
-            echo "3. Test the application functionality"
-
-      - name: Rollback on failure
-        if: failure()
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: ${{ secrets.EC2_PORT || 22 }}
-          timeout: 30s
-          command_timeout: 5m
-          script: |
-            echo "🔄 Deployment failed, attempting rollback..."
-
-            # Restore web files if backup exists
-            if [ -d "/var/www/html/backoffice/build.backup" ]; then
-              sudo rm -rf /var/www/html/backoffice/build
-              sudo mv /var/www/html/backoffice/build.backup /var/www/html/backoffice/build
-              sudo systemctl reload nginx
-              echo "✅ Rollback completed"
-            else
-              echo "❌ No backup found for rollback"
-            fi
-
-      - name: Notify Deployment Status
-        if: always()
-        run: |
-          if [ "${{ job.status }}" = "success" ]; then
-            echo "✅ Qualiflex Backoffice deployment completed successfully"
-          else
-            echo "❌ Qualiflex Backoffice deployment failed"
-          fi
+    - name: Verify deployment
+      run: |
+        ssh -p ${{ secrets.EC2_PORT }} ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} << 'EOF'
+          echo "🔍 Deployment verification:"
+          echo "📁 Files in deployment directory:"
+          ls -la ~/htdocs/backoffice.qualiflex.com.br/current/ | head -10
+          echo ""
+          echo "📊 Deployment size:"
+          du -sh ~/htdocs/backoffice.qualiflex.com.br/current/
+        EOF
