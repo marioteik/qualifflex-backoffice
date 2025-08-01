@@ -1,0 +1,6 @@
+# API routes - proxy to backend
+/api/* /api/:splat 200
+/socket.io/* /socket.io/:splat 200
+
+# SPA fallback - serve index.html for all other routes
+/* /index.html 200 
