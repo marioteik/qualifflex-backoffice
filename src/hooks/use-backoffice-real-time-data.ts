@@ -23,6 +23,8 @@ export function useBackofficeRealTimeData(
       auth: {
         token: session?.access_token,
       },
+      transports: ["websocket"],
+      path: "/socket.io",
     });
 
     updates.on("connect", () => {
