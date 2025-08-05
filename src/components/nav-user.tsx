@@ -8,6 +8,7 @@ import {
   Moon,
   Sun,
   SwatchBook,
+  Lock,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -101,6 +102,12 @@ export function NavUser() {
                 <Link to="configuracoes">
                   <BadgeCheck size={20} />
                   Configurações
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="auth/change-password">
+                  <Lock size={20} />
+                  Alterar Senha
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem>

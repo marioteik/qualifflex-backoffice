@@ -28,6 +28,7 @@ import Orders from "@/routes/orders";
 import OrdersToBuy from "@/routes/orders-to-buy";
 import apiClient from "./api-client";
 import ForgotPassword from "./routes/auth/forgot-password";
+import ChangePassword from "./routes/auth/change-password";
 import ShipmentsImports from "./routes/shipments-imports";
 import axios from "axios";
 import { getApiUrl } from "@/lib/utils/api-url";
@@ -58,6 +59,7 @@ const router = createBrowserRouter(
           const expiresAt = hashParams.get("expires_at");
           const expiresIn = hashParams.get("expires_in");
           const tokenType = hashParams.get("token_type");
+          const type = hashParams.get("type");
 
           const { data, status } = await axios.get(getApiUrl("/auth/verify"), {
             headers: {
@@ -84,6 +86,11 @@ const router = createBrowserRouter(
                 resolve(true);
               }, 200);
             });
+
+            if (type === "magiclink") {
+              window.history.replaceState(null, "", "/auth/change-password");
+              return redirect("/auth/change-password");
+            }
 
             window.history.replaceState(null, "", "/");
             return redirect("/");
@@ -483,6 +490,10 @@ const router = createBrowserRouter(
         {
           path: "forgot-password",
           element: <ForgotPassword />,
+        },
+        {
+          path: "change-password",
+          element: <ChangePassword />,
         },
         {
           path: "confirm",

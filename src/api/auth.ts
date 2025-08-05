@@ -36,3 +36,11 @@ export function useForgotPassword(options: QueryOptions = {}) {
     ...options,
   });
 }
+
+export function useChangePassword(options: QueryOptions = {}) {
+  return useMutation({
+    mutationKey: queryKeyFactory.roles(),
+    mutationFn: postWithToken(route + "/change-password"),
+    ...options,
+  });
+}
