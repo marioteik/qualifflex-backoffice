@@ -6,14 +6,7 @@ import Unfonts from "unplugin-fonts/vite";
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
-  // Load env file based on `mode` in the current working directory.
-  // Set the third parameter to '' to load all env regardless of the `VITE_` prefix.
   const env = loadEnv(mode, process.cwd(), "");
-
-  console.log(`🔧 Vite Config - Mode: ${mode}`);
-  console.log(`🔧 VITE_BASE_PATH: '${env.VITE_BASE_PATH}'`);
-  console.log(`🔧 VITE_API_DOMAIN: '${env.VITE_API_DOMAIN}'`);
-  console.log(`🔧 Using base path: '${env.VITE_BASE_PATH || "/"}'`);
 
   return {
     base: env.VITE_BASE_PATH || "/",
