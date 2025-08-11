@@ -37,8 +37,14 @@ const refreshToken = async () => {
 
     return session?.access_token;
   } catch (e) {
-    console.log(e);
-
+    console.log("Token refresh failed:", e);
+    
+    // If refresh fails, clear session and redirect to expired token page
+    useGlobalStore.getState().setSession(null);
+    if (window.location.pathname !== "/auth/expired-token") {
+      window.location.href = "/auth/expired-token";
+    }
+    
     return "";
   }
 };
@@ -83,6 +89,35 @@ apiClient.interceptors.response.use(
     return response;
   },
   async (error) => {
+    // Handle 401 Unauthorized - typically means token is expired or invalid
+    if (error.response && error.response.status === 401) {
+      const session = useGlobalStore.getState().session;
+      
+      // If we have a session, try to refresh the token once
+      if (session && error.config && !error.config._retry) {
+        error.config._retry = true;
+        
+        try {
+          const newToken = await refreshToken();
+          if (newToken) {
+            error.config.headers["Authorization"] = `Bearer ${newToken}`;
+            return apiClient(error.config);
+          }
+        } catch (refreshError) {
+          console.error("Failed to refresh token:", refreshError);
+          // refreshToken already handles redirect to expired-token page
+          return Promise.reject(refreshError);
+        }
+      }
+      
+      // If no session or refresh failed, redirect to expired token page
+      useGlobalStore.getState().setSession(null);
+      if (window.location.pathname !== "/auth/expired-token" && 
+          !window.location.pathname.startsWith("/auth/")) {
+        window.location.href = "/auth/expired-token";
+      }
+    }
+    
     if (
       error.response &&
       error.response.status === 404 &&

@@ -24,6 +24,8 @@ enum LoginMessages {
   over_email_send_rate_limit = "Por favor, espere 1m para cadastrar novamente",
   email_not_confirmed = "Email não verificado",
   user_banned = "Usuário bloqueado. Favor contactar o administrador do sistema.",
+  expired_token = "Link de acesso expirado.",
+  invalid_token = "Token inválido ou expirado.",
 }
 
 export default function SignIn() {

@@ -29,6 +29,7 @@ import OrdersToBuy from "@/routes/orders-to-buy";
 import apiClient from "./api-client";
 import ForgotPassword from "./routes/auth/forgot-password";
 import ChangePassword from "./routes/auth/change-password";
+import ExpiredToken from "./routes/auth/expired-token";
 import ShipmentsImports from "./routes/shipments-imports";
 import PushNotifications from "./routes/push-notifications";
 import axios from "axios";
@@ -62,14 +63,25 @@ const router = createBrowserRouter(
           const tokenType = hashParams.get("token_type");
           const type = hashParams.get("type");
 
-          const { data, status } = await axios.get(getApiUrl("/auth/verify"), {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          });
+          let verifyResponse;
+          try {
+            verifyResponse = await axios.get(getApiUrl("/auth/verify"), {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            });
+          } catch (error) {
+            // If verification fails, consider the token expired
+            window.history.replaceState(null, "", "/auth/expired-token");
+            return redirect("/auth/expired-token");
+          }
+
+          const { data, status } = verifyResponse;
 
           if (status !== 200) {
-            return redirect("/auth/sign-in");
+            // Token is invalid or expired
+            window.history.replaceState(null, "", "/auth/expired-token");
+            return redirect("/auth/expired-token");
           }
 
           if (data.user) {
@@ -506,6 +518,10 @@ const router = createBrowserRouter(
         {
           path: "change-password",
           element: <ChangePassword />,
+        },
+        {
+          path: "expired-token",
+          element: <ExpiredToken />,
         },
         {
           path: "confirm",
