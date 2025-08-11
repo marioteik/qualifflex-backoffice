@@ -1,6 +1,18 @@
-# Qualiflex Server Configuration
+# Qualiflex Backoffice
 
-This repository contains nginx configurations and deployment scripts for the complete Qualiflex application stack.
+## 📚 Documentação
+
+### 🇧🇷 Documentação em Português Brasileiro
+
+- **[📋 Documentação Completa](DOCUMENTACAO.md)** - Guia completo do sistema
+- **[🚀 Guia Rápido](GUIA_RAPIDO.md)** - Referência para uso diário
+
+### 📖 Documentação em Inglês
+
+- **[📋 Complete Documentation](DOCUMENTACAO.md)** - Complete system guide
+- **[🚀 Quick Guide](GUIA_RAPIDO.md)** - Daily reference guide
+
+---
 
 ## 🏗️ Architecture Overview
 

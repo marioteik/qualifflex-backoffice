@@ -33,6 +33,14 @@ export const queryKeyFactory = {
 
   chatRoomMessages: () => queryKeyFactory.base("chatRoomMessages"),
   shipmentsImports: () => queryKeyFactory.base("shipmentsImports"),
+  pushNotifications: () => queryKeyFactory.base("pushNotifications"),
+  pushNotificationHistory: (limit: number, offset: number) => [
+    ...queryKeyFactory.base("pushNotifications"),
+    "history",
+    { limit, offset },
+  ],
 };
+
+export const queryKey = queryKeyFactory;
 
 export default queryKeyFactory;

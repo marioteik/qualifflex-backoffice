@@ -1,5 +1,6 @@
 import * as React from "react";
 import {
+  Bell,
   Boxes,
   CogIcon,
   LayoutDashboard,
@@ -159,6 +160,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           name: "Remessas Importadas",
           url: "/shipments-imports",
           icon: PackageSearch,
+        },
+        {
+          name: "Push Notifications",
+          url: "/push-notifications",
+          icon: Bell,
         },
         {
           name: "Configurações",

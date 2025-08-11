@@ -114,18 +114,20 @@ export default function DashboardPage() {
 
 function ShipmentsChart({ data, loading }: { data: any[]; loading: boolean }) {
   const chartData = useMemo(() => {
-    if (!data) return [];
+    if (!data || !Array.isArray(data)) return [];
 
     const dailyCounts = data.reduce((acc, shipment) => {
-      const date = format(shipment.createdAt, "dd/MM");
+      const date = format(new Date(shipment.createdAt), "dd/MM");
       acc[date] = (acc[date] || 0) + 1;
       return acc;
     }, {});
 
-    return Object.entries(dailyCounts).map(([date, count]) => ({
-      date,
-      count,
-    }));
+    return Object.entries(dailyCounts)
+      .map(([date, count]) => ({
+        date,
+        count,
+      }))
+      .slice(-30); // Limit to last 30 data points to prevent overflow
   }, [data]);
 
   if (loading) {
@@ -141,11 +143,15 @@ function ShipmentsChart({ data, loading }: { data: any[]; loading: boolean }) {
   }
 
   return (
-    <div className="h-[300px]">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={chartData}>
+    <div className="h-[300px] w-full overflow-hidden">
+      <ResponsiveContainer width="100%" height={300}>
+        <BarChart data={chartData} margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
           <CartesianGrid strokeDasharray="1" />
-          <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+          <XAxis 
+            dataKey="date" 
+            tick={{ fontSize: 12 }}
+            interval="preserveStartEnd"
+          />
           <Tooltip
             contentStyle={{
               background: "hsl(var(--card))",

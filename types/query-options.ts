@@ -1,4 +1,4 @@
-export type QueryOptions = {
+export type QueryOptions<T = void> = {
   onError?: (err: Error) => void;
-  onSuccess?: () => void;
+  onSuccess?: (result?: T) => void;
 };

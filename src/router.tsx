@@ -30,6 +30,7 @@ import apiClient from "./api-client";
 import ForgotPassword from "./routes/auth/forgot-password";
 import ChangePassword from "./routes/auth/change-password";
 import ShipmentsImports from "./routes/shipments-imports";
+import PushNotifications from "./routes/push-notifications";
 import axios from "axios";
 import { getApiUrl } from "@/lib/utils/api-url";
 
@@ -455,6 +456,17 @@ const router = createBrowserRouter(
             crumb: () => (
               <BreadcrumbLink asChild>
                 <Link to="/shipments-imports">Remessas importadas</Link>
+              </BreadcrumbLink>
+            ),
+          },
+        },
+        {
+          path: "push-notifications",
+          element: <PushNotifications />,
+          handle: {
+            crumb: () => (
+              <BreadcrumbLink asChild>
+                <Link to="/push-notifications">Push Notifications</Link>
               </BreadcrumbLink>
             ),
           },
